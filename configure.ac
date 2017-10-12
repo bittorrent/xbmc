@@ -2152,6 +2152,7 @@ OUTPUT_FILES="Makefile \
     Makefile.include \
     addons/skin.estuary/media/Makefile \
     addons/skin.estouchy/media/Makefile \
+    addons/skin.btplay/media/Makefile \
     xbmc/Makefile \
     xbmc/addons/binary/interfaces/Makefile \
     xbmc/cdrip/Makefile \
