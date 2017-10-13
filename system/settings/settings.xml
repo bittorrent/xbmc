@@ -1689,7 +1689,7 @@
       <group id="1" label="13000">
         <setting id="services.devicename" type="string" label="1271" help="36321">
           <level>0</level>
-          <default>Kodi</default>
+          <default>BitTorrent Play</default>
           <control type="edit" format="string" />
         </setting>
       </group>
