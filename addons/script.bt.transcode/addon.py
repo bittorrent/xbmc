@@ -26,9 +26,6 @@ __serviceaddon__ = xbmcaddon.Addon('service.bt.transcode')
 __serviceaddonpath__ = __serviceaddon__.getAddonInfo('path')
 __encodingdir__ = os.path.join(__serviceaddonpath__, '.temp_encoded')
 
-st = os.stat(__ffmpeg__)
-os.chmod(__ffmpeg__, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
 # get all of the movies 'file' parameter (the paths to the movie files)
 def getMovies() :
     json_query = xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"properties" : ["file"]}, "id": 1 }')
