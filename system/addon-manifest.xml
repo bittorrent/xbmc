@@ -26,7 +26,9 @@
   <addon>resource.uisounds.kodi</addon>
   <addon>screensaver.xbmc.builtin.black</addon>
   <addon>screensaver.xbmc.builtin.dim</addon>
+  <addon>script.bt.transcode</addon>
   <addon>script.module.pil</addon>
+  <addon>service.bt.transcode</addon>
   <addon>service.xbmc.versioncheck</addon>
   <addon>skin.estuary</addon>
   <addon>skin.estouchy</addon>

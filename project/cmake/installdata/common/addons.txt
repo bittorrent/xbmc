@@ -30,11 +30,13 @@ addons/repository.xbmc.org/*
 addons/webinterface.default/*
 addons/screensaver.xbmc.builtin.dim/*
 addons/screensaver.xbmc.builtin.black/*
+addons/script.bt.transcode/*
 addons/script.module.pil/*
 addons/script.module.pysqlite/*
 addons/resource.language.en_gb/*
 addons/resource.uisounds.kodi/*
 addons/resource.images.weathericons.default/*
+addons/service.bt.transcode/*
 addons/service.xbmc.versioncheck/*
 addons/metadata.local/*
 addons/metadata.album.universal/*
