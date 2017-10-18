@@ -22,9 +22,9 @@ __addonname__ = __addon__.getAddonInfo('name')
 __addonpath__ = __addon__.getAddonInfo('path')
 __ffmpeg__ = getExecPath('ffmpeg')
 
-__serviceaddon__ = xbmcaddon.Addon('service.bt.transcode')
-__serviceaddonpath__ = __serviceaddon__.getAddonInfo('path')
-__encodingdir__ = os.path.join(__serviceaddonpath__, '.temp_encoded')
+__tempdir__ = xbmc.translatePath('special://temp')
+__encodingdir__ = os.path.join(__tempdir__, 'temp_encoded')
+__pidfile__ = os.path.join(__tempdir__, 'ffmpeg_pid')
 
 # get all of the movies 'file' parameter (the paths to the movie files)
 def getMovies() :
@@ -56,13 +56,38 @@ def cleanUpFiles(playlistFile) :
                 xbmc.log("%s: Failed to remove %s: %s" % (__addonname__, f, traceback.format_exc()), xbmc.LOGDEBUG)
 
 def cleanUpServer(playlistFile) :
-    kill("ffmpeg")
+    pid = readPidFromFile()
+    if pid :
+        kill(pid)
     xbmc.log("%s: cleanup files for %s" % (__addonname__, playlistFile), xbmc.LOGDEBUG)
     for i in xrange(10) :
         cleanUpFiles(playlistFile)
         time.sleep(1)
         if not os.path.isfile(os.path.join(__encodingdir__, playlistFile)) :
             break
+
+# write the PID to a file so we can read it later and issue a kill
+def writePidToFile(pid) :
+    if not pid :
+        return
+    try:
+        # Write PID file
+        pidfile = open(__pidfile__, 'w')
+        pidfile.write(str(pid))
+        pidfile.close()
+    except:
+        xbmc.log('%s: Failed to write %s: %s' % (__addonname__, __pidfile__, traceback.format_exc()), xbmc.LOGDEBUG)
+
+def readPidFromFile() :
+    try:
+        pidfile = open(__pidfile__, 'r')
+        pid = pidfile.readline().strip()
+        pidfile.close()
+        os.remove(__pidfile__)
+    except:
+        pid = None
+        xbmc.log('%s: Failed to read %s: %s' % (__addonname__, __pidfile__, traceback.format_exc()), xbmc.LOGDEBUG)
+    return pid
 
 #########################
 # Main
@@ -74,12 +99,14 @@ if __name__ == '__main__':
 
     if 'download' == mode :
         # for 'download', destination is 'http://<host>:<port>/<filename>'
-        run([__ffmpeg__] + movieTranscodeForDownload(getMoviePathFromUpnpPath(inputFile), destination))
+        pid = run([__ffmpeg__] + movieTranscodeForDownload(getMoviePathFromUpnpPath(inputFile), destination))
+        writePidToFile(pid)
     elif 'stream' == mode :
         # for 'stream', destination is an m3u8 filename to which we append the
         # temporary encoding path
         destination = os.path.join(__encodingdir__, destination)
-        run([__ffmpeg__] + movieTranscodeForStreaming(getMoviePathFromUpnpPath(inputFile), destination))
+        pid = run([__ffmpeg__] + movieTranscodeForStreaming(getMoviePathFromUpnpPath(inputFile), destination))
+        writePidToFile(pid)
     elif 'stream_cleanup' == mode :
         cleanUpServer(destination)
     else :
