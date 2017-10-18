@@ -23,29 +23,14 @@ def run(command) :
         xbmc.log('%s: run returned %s' % (__addonname__, process.returncode), xbmc.LOGDEBUG)
     except:
         xbmc.log('%s: Failed to execute %s: %s' % (__addonname__, ' '.join(command), traceback.format_exc()), xbmc.LOGDEBUG)
+    return process.pid
 
-    # write the PID to a file so we can read it later and issue a kill
+def kill(pid) :
+    xbmc.log('%s: kill ffmpeg pid %s' % (__addonname__, pid), xbmc.LOGDEBUG)
     try:
-        # Write PID file
-        pidfile = open(__pidfile__, 'w')
-        pidfile.write(str(self.process.pid))
-        pidfile.close()
+        os.kill(int(pid), signal.SIGKILL)
     except:
-        xbmc.log('%s: Failed to write %s: %s' % (__addonname__, __pidfile__, traceback.format_exc()), xbmc.LOGDEBUG)
-
-def kill(command) :
-    try:
-        pidfile = open(__pidfile__, 'r')
-        pid = pidfile.readline().strip()
-        pidfile.close()
-    except:
-        xbmc.log('%s: Failed to read %s: %s' % (__addonname__, __pidfile__, traceback.format_exc()), xbmc.LOGDEBUG)
-
-    if pid :
-        try:
-            os.kill(int(pid), signal.SIGKILL)
-        except:
-            xbmc.log('%s: Failed to kill %s: %s' % (__addonname__, pid, traceback.format_exc()), xbmc.LOGDEBUG)
+        xbmc.log('%s: Failed to kill %s: %s' % (__addonname__, pid, traceback.format_exc()), xbmc.LOGDEBUG)
 
 def getExecPath(program) :
     return os.path.join(__addonpath__, 'exec', program)
