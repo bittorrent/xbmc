@@ -14,8 +14,10 @@ __addonpath__ = __addon__.getAddonInfo('path')
 def run(command) :
     xbmc.log('%s: run \"%s\"' % (__addonname__, ' '.join(command)), xbmc.LOGDEBUG)
     try:
-        process = subprocess.Popen(command, stderr=subprocess.STDOUT)
-        # process.wait()
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        process = subprocess.Popen(command, startupinfo=startupinfo)
+        process.wait()
         xbmc.log("%s: run returned %s" % (__addonname__, process.returncode), xbmc.LOGDEBUG)
     except:
         xbmc.log("%s: Failed to execute %s: %s" % (__addonname__, " ".join(command), traceback.format_exc()), xbmc.LOGDEBUG)
