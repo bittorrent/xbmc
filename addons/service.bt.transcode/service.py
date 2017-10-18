@@ -4,13 +4,13 @@ import xbmcaddon
 import os
 import SimpleHTTPServer
 import SocketServer
-import shutil
 import threading
 
 __addon__ = xbmcaddon.Addon()
 __addonname__ = __addon__.getAddonInfo('name')
-__addonpath__ = __addon__.getAddonInfo('path')
-__encodingdir__ = os.path.join(__addonpath__, '.temp_encoded')
+
+__tempdir__ = xbmc.translatePath('special://temp')
+__encodingdir__ = os.path.join(__tempdir__, 'temp_encoded')
 
 HTTPD_PORT = 9000
 
@@ -35,7 +35,12 @@ class HttpServer() :
         xbmc.log("%s: httpd server shutting down! %s" % (__addonname__, time.time()), level=xbmc.LOGDEBUG)
         self.httpd.shutdown()
         xbmc.log("%s: removing dangling transcoded files %s" % (__addonname__, time.time()), level=xbmc.LOGDEBUG)
-        shutil.rmtree(__encodingdir__)
+        # remove all files in the temporary encoding directory
+        for f in os.listdir(__encodingdir__):
+            try :
+                os.remove(os.path.join(__encodingdir__, f))
+            except:
+                xbmc.log("%s: Failed to remove %s: %s" % (__addonname__, f, traceback.format_exc()), xbmc.LOGDEBUG)
 
 if __name__ == '__main__':
     monitor = xbmc.Monitor()
