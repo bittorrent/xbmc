@@ -61,7 +61,6 @@ def cleanUpFiles(playlistFile) :
                 xbmc.log("%s: Failed to remove %s: %s" % (__addonname__, f, traceback.format_exc()), xbmc.LOGDEBUG)
 
 def cleanUpServer(playlistFile) :
-    killFfmpeg()
     xbmc.log("%s: cleanup files for %s" % (__addonname__, playlistFile), xbmc.LOGDEBUG)
     for i in xrange(10) :
         cleanUpFiles(playlistFile)
@@ -111,6 +110,7 @@ if __name__ == '__main__':
         pid = run([__ffmpeg__] + movieTranscodeForStreaming(getMoviePathFromUpnpPath(inputFile), destination))
         writePidToFile(pid)
     elif 'stream_cleanup' == mode :
+        killFfmpeg()
         cleanUpServer(destination)
     elif 'download_cleanup' == mode :
         killFfmpeg()
