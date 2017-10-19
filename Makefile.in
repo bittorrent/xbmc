@@ -233,7 +233,7 @@ SKIN_DIRS=$(ESTUARY_MEDIA)
 ESTOUCHY_MEDIA=addons/skin.estouchy/media
 SKIN_DIRS+=$(ESTOUCHY_MEDIA)
 
-BTPLAY_MEDIA=addons/skin.btplay/media
+BTPLAY_MEDIA=addons/skin.bt.play/media
 SKIN_DIRS+=$(BTPLAY_MEDIA)
 
 LIBS=@LIBS@
