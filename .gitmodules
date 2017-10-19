@@ -2,3 +2,7 @@
 	path = addons/script.bt.transcode
 	url = https://github.com/bittorrent/script.bt.transcode.git
 	branch = master
+[submodule "addons/skin.bt.play"]
+	path = addons/skin.bt.play
+	url = https://github.com/bittorrent/skin.bt.play.git
+	branch = master
