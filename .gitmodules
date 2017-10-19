@@ -1,0 +1,4 @@
+[submodule "addons/script.bt.transcode"]
+	path = addons/script.bt.transcode
+	url = https://github.com/bittorrent/script.bt.transcode.git
+	branch = master
