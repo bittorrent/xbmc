@@ -75,4 +75,4 @@ if ( $ARGV[0] eq "-c" ) {
     exit;
 }
 
-make_dmg($ARGV[0], $ARGV[1], "BitTorrent Play");
+make_dmg($ARGV[0], $ARGV[1], "BTPlay");
