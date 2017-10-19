@@ -14,8 +14,9 @@ __addonpath__ = __addon__.getAddonInfo('path')
 def run(command) :
     xbmc.log('%s: run \"%s\"' % (__addonname__, ' '.join(command)), xbmc.LOGDEBUG)
     try:
-        process = subprocess.Popen(command, stderr=subprocess.STDOUT)
-        # process.wait()
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        process = subprocess.Popen(command, startupinfo=startupinfo)
         xbmc.log("%s: run returned %s" % (__addonname__, process.returncode), xbmc.LOGDEBUG)
     except:
         xbmc.log("%s: Failed to execute %s: %s" % (__addonname__, " ".join(command), traceback.format_exc()), xbmc.LOGDEBUG)
@@ -24,7 +25,8 @@ def run(command) :
 def kill(pid) :
     xbmc.log('%s: kill ffmpeg pid %s' % (__addonname__, pid), xbmc.LOGDEBUG)
     try:
-        os.system('taskkill /f /t /pid %s' % pid)
+        command = ['taskkill', '/F', '/T', '/PID', pid]
+        run(command)
     except:
         xbmc.log('%s: Failed to kill pid %s: %s' % (__addonname__, pid, traceback.format_exc()), xbmc.LOGDEBUG)
 

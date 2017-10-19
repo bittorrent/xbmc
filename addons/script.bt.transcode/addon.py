@@ -46,6 +46,11 @@ def getMoviePathFromUpnpPath(inputFile) :
         if  os.path.basename(urllib.unquote(inputFile)) == os.path.basename(filename) :
             return filename
 
+def killFfmpeg() :
+    pid = readPidFromFile()
+    if pid :
+        kill(pid)
+
 def cleanUpFiles(playlistFile) :
     basename, extension = os.path.splitext(playlistFile)
     for f in os.listdir(__encodingdir__):
@@ -56,9 +61,6 @@ def cleanUpFiles(playlistFile) :
                 xbmc.log("%s: Failed to remove %s: %s" % (__addonname__, f, traceback.format_exc()), xbmc.LOGDEBUG)
 
 def cleanUpServer(playlistFile) :
-    pid = readPidFromFile()
-    if pid :
-        kill(pid)
     xbmc.log("%s: cleanup files for %s" % (__addonname__, playlistFile), xbmc.LOGDEBUG)
     for i in xrange(10) :
         cleanUpFiles(playlistFile)
@@ -108,6 +110,9 @@ if __name__ == '__main__':
         pid = run([__ffmpeg__] + movieTranscodeForStreaming(getMoviePathFromUpnpPath(inputFile), destination))
         writePidToFile(pid)
     elif 'stream_cleanup' == mode :
+        killFfmpeg()
         cleanUpServer(destination)
+    elif 'download_cleanup' == mode :
+        killFfmpeg()
     else :
         xbmc.log('%s: Unknown mode "%s"' % (__addonname__, mode), xbmc.LOGERROR)
