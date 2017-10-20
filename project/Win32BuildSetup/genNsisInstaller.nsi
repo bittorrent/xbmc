@@ -9,7 +9,7 @@
   !include "nsDialogs.nsh"
   !include "LogicLib.nsh"
   !include "WinVer.nsh"
-  
+
 ;--------------------------------
 ;General
 
@@ -27,7 +27,7 @@
   RequestExecutionLevel admin
 
   InstProgressFlags smooth
-  
+
   ; Installer file properties
   VIProductVersion                   ${VERSION_NUMBER}
   VIAddVersionKey "ProductName"      "${APP_NAME}"
@@ -47,7 +47,7 @@
   Var PageProfileState
   Var VSRedistSetupError
   Var /GLOBAL CleanDestDir
-  
+
 ;--------------------------------
 ;Interface Settings
 
@@ -63,7 +63,7 @@
   !define MUI_FINISHPAGE_LINK_LOCATION "${WEBSITE}"
   !define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}.exe"
   !define MUI_FINISHPAGE_RUN_NOTCHECKED
-  !define MUI_ABORTWARNING  
+  !define MUI_ABORTWARNING
 ;--------------------------------
 ;Pages
 
@@ -72,12 +72,12 @@
   !insertmacro MUI_PAGE_COMPONENTS
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
   !insertmacro MUI_PAGE_DIRECTORY
-  
+
   ;Start Menu Folder Page Configuration
-  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}" 
+  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}"
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
-  !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder  
+  !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
@@ -188,11 +188,11 @@ Section "${APP_NAME}" SecAPP
 
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  
+
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   ;Create shortcuts
   SetOutPath "$INSTDIR"
-  
+
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
@@ -200,9 +200,9 @@ Section "${APP_NAME}" SecAPP
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
     "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
     "" "Uninstall ${APP_NAME}."
-  
+
   WriteINIStr "$SMPROGRAMS\$StartMenuFolder\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
-  !insertmacro MUI_STARTMENU_WRITE_END  
+  !insertmacro MUI_STARTMENU_WRITE_END
 
   ;add entry to add/remove programs
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
@@ -294,7 +294,7 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\system"
   RMDir /r "$INSTDIR\userdata"
   Delete "$INSTDIR\*.*"
-  
+
   ;Un-install User Data if option is checked, otherwise skip
   ${If} $UnPageProfileCheckbox_State == ${BST_CHECKED}
     SetShellVarContext current
@@ -308,7 +308,7 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\$StartMenuFolder\Visit ${APP_NAME} Online.url"
-  RMDir "$SMPROGRAMS\$StartMenuFolder"  
+  RMDir "$SMPROGRAMS\$StartMenuFolder"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
 
