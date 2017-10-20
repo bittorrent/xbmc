@@ -10,3 +10,6 @@
 	path = addons/service.bt.play
 	url = https://github.com/bittorrent/service.bt.play.git
 	branch = master
+[submodule "addons/service.bt.autosources"]
+	path = addons/service.bt.autosources
+	url = https://github.com/bittorrent/service.bt.autosources.git
