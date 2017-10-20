@@ -29,11 +29,11 @@
   <addon>screensaver.xbmc.builtin.dim</addon>
   <addon>script.bt.transcode</addon>
   <addon>script.module.pil</addon>
-  <addon>service.bt.transcode</addon>
+  <addon>service.bt.play</addon>
   <addon>service.xbmc.versioncheck</addon>
   <addon>skin.estuary</addon>
   <addon>skin.estouchy</addon>
-  <addon>skin.btplay</addon>
+  <addon>skin.bt.play</addon>
   <addon>webinterface.default</addon>
   <addon>xbmc.addon</addon>
   <addon>xbmc.audioencoder</addon>
