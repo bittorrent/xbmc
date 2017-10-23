@@ -155,9 +155,9 @@ FunctionEnd
 ;--------------------------------
 ;Install levels
 
-InstType "Full"    ; 1.
+InstType "Minimal" ; 1.
 InstType "Normal"  ; 2.
-InstType "Minimal" ; 3.
+InstType "Full"    ; 3.
 
 ;--------------------------------
 ;Installer Sections
@@ -330,7 +330,7 @@ SectionGroup "Microsoft Visual C++ packages" SEC_VCREDIST
 
 Section "VS2015 C++ re-distributable Package (x86)" SEC_VCREDIST1
 DetailPrint "Running VS2015 re-distributable setup..."
-  SectionIn 1 2 #section is in install type Full
+  SectionIn 3 #section is in install type Full
   SetOutPath "$TEMP\vc2015"
   File "${app_root}\..\dependencies\vcredist\2015\vcredist_x86.exe"
   ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
