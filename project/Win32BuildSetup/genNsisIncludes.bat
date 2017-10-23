@@ -6,7 +6,7 @@ rem http://kodi.tv
 rem Script by chadoe
 rem This script generates NullSoft NSIS installer include files for application's add-ons
 rem "SectionIn" defines on what level the section is selected by default
-rem 1. Full / 2. Normal  / 3. Minimal
+rem 1. Minimal / 2. Normal  / 3. Full
 
 IF EXIST *-addons.nsi del *-addons.nsi > NUL
 SETLOCAL ENABLEDELAYEDEXPANSION
@@ -17,7 +17,7 @@ IF EXIST BUILD_WIN32\addons\pvr.* (
   FOR /F "tokens=*" %%P IN ('dir /B /AD BUILD_WIN32\addons\pvr.*') DO (
     FOR /f "delims=<" %%N in ('powershell.exe -noprofile -ExecutionPolicy Unrestricted -command "& {[xml]$a = get-content BUILD_WIN32\addons\%%P\addon.xml;$a.addon.name}"') do (
       ECHO Section "%%N" SecPvrAddons!Counter! >> pvr-addons.nsi
-      ECHO SectionIn 1 2 >> pvr-addons.nsi
+      ECHO SectionIn 3 >> pvr-addons.nsi
       ECHO SetOutPath "$INSTDIR\addons\%%P" >> pvr-addons.nsi
       ECHO File /r "${app_root}\addons\%%P\*.*" >> pvr-addons.nsi
       ECHO SectionEnd >> pvr-addons.nsi
@@ -33,7 +33,7 @@ IF EXIST BUILD_WIN32\addons\audiodecoder.* (
   FOR /F "tokens=*" %%P IN ('dir /B /AD BUILD_WIN32\addons\audiodecoder.*') DO (
     FOR /f "delims=<" %%N in ('powershell.exe -noprofile -ExecutionPolicy Unrestricted -command "& {[xml]$a = get-content BUILD_WIN32\addons\%%P\addon.xml;$a.addon.name}"') do (
       ECHO Section "%%N" SecAudioDecoderAddons!Counter! >> audiodecoder-addons.nsi
-      ECHO SectionIn 1 >> audiodecoder-addons.nsi
+      ECHO SectionIn 3 >> audiodecoder-addons.nsi
       ECHO SetOutPath "$INSTDIR\addons\%%P" >> audiodecoder-addons.nsi
       ECHO File /r "${app_root}\addons\%%P\*.*" >> audiodecoder-addons.nsi
       ECHO SectionEnd >> audiodecoder-addons.nsi
@@ -65,7 +65,7 @@ IF EXIST BUILD_WIN32\addons\adsp.* (
   FOR /F "tokens=*" %%P IN ('dir /B /AD BUILD_WIN32\addons\adsp.*') DO (
     FOR /f "delims=<" %%N in ('powershell.exe -noprofile -ExecutionPolicy Unrestricted -command "& {[xml]$a = get-content BUILD_WIN32\addons\%%P\addon.xml;$a.addon.name}"') do (
       ECHO Section "%%N" SecAudioDSPAddons!Counter! >> audiodsp-addons.nsi
-      ECHO SectionIn 1 2 >> audiodsp-addons.nsi
+      ECHO SectionIn 2 3 >> audiodsp-addons.nsi
       ECHO SetOutPath "$INSTDIR\addons\%%P" >> audiodsp-addons.nsi
       ECHO File /r "${app_root}\addons\%%P\*.*" >> audiodsp-addons.nsi
       ECHO SectionEnd >> audiodsp-addons.nsi
@@ -81,7 +81,7 @@ IF EXIST BUILD_WIN32\addons\screensaver.* (
   FOR /F "tokens=*" %%P IN ('dir /B /AD BUILD_WIN32\addons\screensaver.*') DO (
     FOR /f "delims=<" %%N in ('powershell.exe -noprofile -ExecutionPolicy Unrestricted -command "& {[xml]$a = get-content BUILD_WIN32\addons\%%P\addon.xml;$a.addon.name}"') do (
       ECHO Section "%%N" SecScreensaverAddons!Counter! >> screensaver-addons.nsi
-      ECHO SectionIn 1 2 3 >> screensaver-addons.nsi
+      ECHO SectionIn 3 >> screensaver-addons.nsi
       ECHO SetOutPath "$INSTDIR\addons\%%P" >> screensaver-addons.nsi
       ECHO File /r "${app_root}\addons\%%P\*.*" >> screensaver-addons.nsi
       ECHO SectionEnd >> screensaver-addons.nsi
@@ -97,7 +97,7 @@ IF EXIST BUILD_WIN32\addons\visualization.* (
   FOR /F "tokens=*" %%P IN ('dir /B /AD BUILD_WIN32\addons\visualization.*') DO (
     FOR /f "delims=<" %%N in ('powershell.exe -noprofile -ExecutionPolicy Unrestricted -command "& {[xml]$a = get-content BUILD_WIN32\addons\%%P\addon.xml;$a.addon.name}"') do (
       ECHO Section "%%N" SecVisualizationAddons!Counter! >> visualization-addons.nsi
-      ECHO SectionIn 1 2 3 >> visualization-addons.nsi
+      ECHO SectionIn 3 >> visualization-addons.nsi
       ECHO SetOutPath "$INSTDIR\addons\%%P" >> visualization-addons.nsi
       ECHO File /r "${app_root}\addons\%%P\*.*" >> visualization-addons.nsi
       ECHO SectionEnd >> visualization-addons.nsi
@@ -113,7 +113,7 @@ IF EXIST BUILD_WIN32\addons\inputstream.* (
   FOR /F "tokens=*" %%P IN ('dir /B /AD BUILD_WIN32\addons\inputstream.*') DO (
     FOR /f "delims=<" %%N in ('powershell.exe -noprofile -ExecutionPolicy Unrestricted -command "& {[xml]$a = get-content BUILD_WIN32\addons\%%P\addon.xml;$a.addon.name}"') do (
       ECHO Section "%%N" SecInputstreamAddons!Counter! >> inputstream-addons.nsi
-      ECHO SectionIn 1 2 >> inputstream-addons.nsi
+      ECHO SectionIn 3 >> inputstream-addons.nsi
       ECHO SetOutPath "$INSTDIR\addons\%%P" >> inputstream-addons.nsi
       ECHO File /r "${app_root}\addons\%%P\*.*" >> inputstream-addons.nsi
       ECHO SectionEnd >> inputstream-addons.nsi
