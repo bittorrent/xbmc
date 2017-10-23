@@ -1,0 +1,20 @@
+[submodule "addons/script.bt.transcode"]
+	path = addons/script.bt.transcode
+	url = https://github.com/bittorrent/script.bt.transcode.git
+	branch = master
+[submodule "addons/skin.bt.play"]
+	path = addons/skin.bt.play
+	url = https://github.com/bittorrent/skin.bt.play.git
+	branch = master
+[submodule "addons/service.bt.play"]
+	path = addons/service.bt.play
+	url = https://github.com/bittorrent/service.bt.play.git
+	branch = master
+[submodule "addons/service.bt.autosources"]
+	path = addons/service.bt.autosources
+	url = https://github.com/bittorrent/service.bt.autosources.git
+	branch = master
+[submodule "addons/service.libraryautoupdate"]
+	path = addons/service.libraryautoupdate
+	url = https://github.com/bittorrent/xbmclibraryautoupdate
+	branch = master
