@@ -36,7 +36,9 @@ addons/script.module.pysqlite/*
 addons/resource.language.en_gb/*
 addons/resource.uisounds.kodi/*
 addons/resource.images.weathericons.default/*
+addons/service.bt.autosources/*
 addons/service.bt.play/*
+addons/service.libraryautoupdate/*
 addons/service.xbmc.versioncheck/*
 addons/metadata.local/*
 addons/metadata.album.universal/*

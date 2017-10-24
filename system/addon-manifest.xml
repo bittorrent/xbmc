@@ -29,7 +29,9 @@
   <addon>screensaver.xbmc.builtin.dim</addon>
   <addon>script.bt.transcode</addon>
   <addon>script.module.pil</addon>
+  <addon>service.bt.autosources</addon>
   <addon>service.bt.play</addon>
+  <addon>service.libraryautoupdate</addon>
   <addon>service.xbmc.versioncheck</addon>
   <addon>skin.estuary</addon>
   <addon>skin.estouchy</addon>
