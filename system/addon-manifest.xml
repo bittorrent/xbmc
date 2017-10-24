@@ -35,7 +35,7 @@
   <addon>service.xbmc.versioncheck</addon>
   <addon>skin.estuary</addon>
   <addon>skin.estouchy</addon>
-  <addon>skin.btplay</addon>
+  <addon>skin.bt.play</addon>
   <addon>webinterface.default</addon>
   <addon>xbmc.addon</addon>
   <addon>xbmc.audioencoder</addon>

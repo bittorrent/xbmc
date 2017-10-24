@@ -269,7 +269,7 @@ copy_files_from_filelist_to_buildtree(${PROJECT_SOURCE_DIR}/installdata/common/*
 
 list(APPEND SKINS "${CORE_SOURCE_DIR}/addons/skin.estuary\;${CORE_SOURCE_DIR}")
 list(APPEND SKINS "${CORE_SOURCE_DIR}/addons/skin.estouchy\;${CORE_SOURCE_DIR}")
-list(APPEND SKINS "${CORE_SOURCE_DIR}/addons/skin.btplay\;${CORE_SOURCE_DIR}")
+list(APPEND SKINS "${CORE_SOURCE_DIR}/addons/skin.bt.play\;${CORE_SOURCE_DIR}")
 
 # These are skins that are copied into place from the source tree
 foreach(skin ${SKINS})
