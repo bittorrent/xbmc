@@ -71,7 +71,7 @@
   !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
   !insertmacro MUI_PAGE_COMPONENTS
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
-  !insertmacro MUI_PAGE_DIRECTORY
+  ;!insertmacro MUI_PAGE_DIRECTORY
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
