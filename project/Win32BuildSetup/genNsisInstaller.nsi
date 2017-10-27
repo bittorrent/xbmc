@@ -43,7 +43,6 @@
 ;--------------------------------
 ;Variables
 
-  Var StartMenuFolder
   Var PageProfileState
   Var VSRedistSetupError
   Var /GLOBAL CleanDestDir
@@ -69,16 +68,8 @@
 
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
-  !insertmacro MUI_PAGE_COMPONENTS
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
-  ;!insertmacro MUI_PAGE_DIRECTORY
-
-  ;Start Menu Folder Page Configuration
-  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}"
-  !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
-  !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
-
+  !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 
@@ -186,23 +177,20 @@ Section "${APP_NAME}" SecAPP
   ;Store installation folder
   WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
 
-  ;Create uninstaller
-  WriteUninstaller "$INSTDIR\Uninstall.exe"
-
-  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   ;Create shortcuts
   SetOutPath "$INSTDIR"
 
-  CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
     "" "Start ${APP_NAME}."
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+  CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
     "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
     "" "Uninstall ${APP_NAME}."
 
-  WriteINIStr "$SMPROGRAMS\$StartMenuFolder\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
-  !insertmacro MUI_STARTMENU_WRITE_END
+  WriteINIStr "$SMPROGRAMS\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
+
+  ;Create uninstaller
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   ;add entry to add/remove programs
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
@@ -309,11 +297,9 @@ Section "Uninstall"
   ${EndIf}
   RMDir "$INSTDIR"
 
-  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
-  Delete "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\$StartMenuFolder\Visit ${APP_NAME} Online.url"
-  RMDir "$SMPROGRAMS\$StartMenuFolder"
+  Delete "$SMPROGRAMS\${APP_NAME}.lnk"
+  Delete "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk"
+  Delete "$SMPROGRAMS\Visit ${APP_NAME} Online.url"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
 
