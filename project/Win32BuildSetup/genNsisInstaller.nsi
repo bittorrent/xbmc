@@ -164,24 +164,6 @@ Section "${APP_NAME}" SecAPP
   SetOutPath "$INSTDIR\userdata"
   File /r "${app_root}\application\userdata\*.*"
 
-  ;Store installation folder
-  WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
-
-  ;Create shortcuts
-  SetOutPath "$INSTDIR"
-
-  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-    "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-    "" "Start ${APP_NAME}."
-  CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
-    "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
-    "" "Uninstall ${APP_NAME}."
-
-  WriteINIStr "$SMPROGRAMS\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
-
-  ;Create uninstaller
-  WriteUninstaller "$INSTDIR\Uninstall.exe"
-
   ; audio encoder addons
   SetOutPath "$INSTDIR\addons\audioencoder.flac"
   File /r "${app_root}\addons\audioencoder.flac\*.*"
@@ -192,8 +174,13 @@ Section "${APP_NAME}" SecAPP
   SetOutPath "$INSTDIR\addons\audioencoder.wav"
   File /r "${app_root}\addons\audioencoder.wav\*.*"
 
+  ;Store installation folder
+  WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
+
   ;Create uninstaller
   SetOutPath "$INSTDIR"
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
   ;add entry to add/remove programs
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "DisplayName" "${APP_NAME}"
@@ -214,17 +201,29 @@ Section "${APP_NAME}" SecAPP
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "URLInfoAbout" "${WEBSITE}"
 
+  ;Create shortcuts
+  SetOutPath "$INSTDIR"
+
+  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+                  "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+                  "" "Start ${APP_NAME}."
+  CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+                  "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
+                  "" "Uninstall ${APP_NAME}."
+
+  WriteINIStr "$SMPROGRAMS\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
+
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
   nsisFirewall::AddAuthorizedApplication "$INSTDIR\${APP_NAME}.exe" "${APP_NAME}"
   nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
   Pop $0
 
-;  ;vs redist installer Section
-;  SetOutPath "$TEMP\vc2015"
-;  File "${app_root}\..\dependencies\vcredist\2015\vcredist_x86.exe"
-;  ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
-;  RMDir /r "$TEMP\vc2015"
-;  DetailPrint "Finished VS2015 re-distributable setup"
+  ;vs redist installer Section
+  SetOutPath "$TEMP\vc2015"
+  File "${app_root}\..\dependencies\vcredist\2015\vcredist_x86.exe"
+  ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
+  RMDir /r "$TEMP\vc2015"
+  DetailPrint "Finished VS2015 re-distributable setup"
 
 SectionEnd
 
