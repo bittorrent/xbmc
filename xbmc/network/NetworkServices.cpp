@@ -1060,7 +1060,7 @@ bool CNetworkServices::StopZeroconf()
 
 bool CNetworkServices::ValidatePort(int port)
 {
-  if (port <= 0 || port > 65535)
+  if (port < 0 || port > 65535)
     return false;
 
 #ifdef TARGET_LINUX
