@@ -51,6 +51,14 @@
 #include "XBDateTime.h"
 
 #ifdef TARGET_WINDOWS
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
+
+#ifdef TARGET_WINDOWS
 #ifndef _DEBUG
 #pragma comment(lib, "libmicrohttpd.lib")
 #else  // _DEBUG
@@ -1158,6 +1166,10 @@ struct MHD_Daemon* CWebServer::StartMHD(unsigned int flags, int port)
                           MHD_OPTION_END);
 }
 
+short CWebServer::getPort() {
+    return m_port;
+}
+
 bool CWebServer::Start(uint16_t port, const std::string &username, const std::string &password)
 {
   SetCredentials(username, password);
@@ -1176,6 +1188,17 @@ bool CWebServer::Start(uint16_t port, const std::string &username, const std::st
     if (m_running)
     {
       m_port = port;
+
+      //DLC
+      const union MHD_DaemonInfo * deviceInfo = MHD_get_daemon_info(m_daemon_ip4, MHD_DAEMON_INFO_LISTEN_FD);
+      if(deviceInfo != NULL) {
+        struct sockaddr_in addr;
+        socklen_t addrlen = sizeof(addr);
+        if(getsockname(deviceInfo->listen_fd, (struct sockaddr *)&addr, &addrlen) == 0 && addr.sin_family == AF_INET) {
+          m_port = ntohs(addr.sin_port);
+        }
+      }
+
       CLog::Log(LOGNOTICE, "CWebServer[%hu]: Started", m_port);
     }
     else

@@ -536,10 +536,10 @@ bool CNetworkServices::StartWebserver()
   std::vector<std::pair<std::string, std::string> > txt;
   // publish web frontend and API services
 #ifdef HAS_WEB_INTERFACE
-  CZeroconf::GetInstance()->PublishService("servers.webserver", "_http._tcp", CSysInfo::GetDeviceName(), webPort, txt);
+  CZeroconf::GetInstance()->PublishService("servers.webserver", "_http._tcp", CSysInfo::GetDeviceName(), m_webserver.getPort(), txt);
 #endif // HAS_WEB_INTERFACE
 #ifdef HAS_JSONRPC
-  CZeroconf::GetInstance()->PublishService("servers.jsonrpc-http", "_xbmc-jsonrpc-h._tcp", CSysInfo::GetDeviceName(), webPort, txt);
+  CZeroconf::GetInstance()->PublishService("servers.jsonrpc-http", "_xbmc-jsonrpc-h._tcp", CSysInfo::GetDeviceName(), m_webserver.getPort(), txt);
 #endif // HAS_JSONRPC
 #endif // HAS_ZEROCONF
 
