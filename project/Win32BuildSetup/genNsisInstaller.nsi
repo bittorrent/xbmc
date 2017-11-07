@@ -164,16 +164,6 @@ Section "${APP_NAME}" SecAPP
   SetOutPath "$INSTDIR\userdata"
   File /r "${app_root}\application\userdata\*.*"
 
-  ; audio encoder addons
-  SetOutPath "$INSTDIR\addons\audioencoder.flac"
-  File /r "${app_root}\addons\audioencoder.flac\*.*"
-  SetOutPath "$INSTDIR\addons\audioencoder.lame"
-  File /r "${app_root}\addons\audioencoder.lame\*.*"
-  SetOutPath "$INSTDIR\addons\audioencoder.vorbis"
-  File /r "${app_root}\addons\audioencoder.vorbis\*.*"
-  SetOutPath "$INSTDIR\addons\audioencoder.wav"
-  File /r "${app_root}\addons\audioencoder.wav\*.*"
-
   ;Store installation folder
   WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
 
