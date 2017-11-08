@@ -59,8 +59,9 @@
   !define MUI_UNWELCOMEFINISHPAGE_BITMAP "..\..\tools\windows\packaging\media\installer\welcome-left.bmp"
   !define MUI_FINISHPAGE_LINK "Please visit ${WEBSITE} for more information."
   !define MUI_FINISHPAGE_LINK_LOCATION "${WEBSITE}"
-  !define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}.exe"
-  !define MUI_FINISHPAGE_RUN_NOTCHECKED
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_CHECKED
+  !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
   !define MUI_ABORTWARNING
 ;--------------------------------
 ;Pages
@@ -84,6 +85,14 @@
 
 ;--------------------------------
 ;HelperFunction
+
+Function LaunchLink
+  ${If} ${AtLeastWin10}
+    ExecShell "open" "$SMPROGRAMS\${APP_NAME}-minimized.lnk"
+  ${Else}
+    ExecShell "open" "$SMPROGRAMS\${APP_NAME}.lnk"
+  ${EndIf}
+FunctionEnd
 
 Function CallbackDirLeave
   ;deinstall kodi if it is already there in destination folder
@@ -197,6 +206,11 @@ Section "${APP_NAME}" SecAPP
   CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
                   "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
                   "" "Start ${APP_NAME}."
+  ${If} ${AtLeastWin10}
+    CreateShortCut "$SMPROGRAMS\${APP_NAME}-minimized.lnk" "$INSTDIR\${APP_NAME}.exe" \
+                    "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWMINIMIZED \
+                    "" "Start ${APP_NAME} minimized."
+  ${EndIf}
   CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
                   "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
                   "" "Uninstall ${APP_NAME}."
@@ -276,6 +290,9 @@ Section "Uninstall"
   RMDir "$INSTDIR"
 
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
+  ${If} ${AtLeastWin10}
+    Delete "$SMPROGRAMS\${APP_NAME}-minimized.lnk"
+  ${EndIf}
   Delete "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\Visit ${APP_NAME} Online.url"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
