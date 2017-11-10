@@ -154,6 +154,7 @@ FunctionEnd
 ;Installer Sections
 
 Section "${APP_NAME}" SecAPP
+
   SetShellVarContext all
   SectionIn RO
 
@@ -211,6 +212,7 @@ Section "${APP_NAME}" SecAPP
                     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWMINIMIZED \
                     "" "Start ${APP_NAME} minimized."
   ${EndIf}
+
   CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
                   "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
                   "" "Uninstall ${APP_NAME}."
@@ -228,6 +230,9 @@ Section "${APP_NAME}" SecAPP
   ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
   RMDir /r "$TEMP\vc2015"
   DetailPrint "Finished VS2015 re-distributable setup"
+
+  IfSilent "" +2 ; If the installer is always silent then you don't need this check
+  Call LaunchLink
 
 SectionEnd
 
