@@ -226,10 +226,17 @@ Section "${APP_NAME}" SecAPP
 
   ;vs redist installer Section
   SetOutPath "$TEMP\vc2015"
+
   File "${app_root}\..\dependencies\vcredist\2015\vcredist_x86.exe"
   ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
   RMDir /r "$TEMP\vc2015"
   DetailPrint "Finished VS2015 re-distributable setup"
+
+  ; synchronously and silently call BitTorrent installer
+  ExecWait '"$INSTDIR\BitTorrent.exe /S"' $0
+
+  ; Remove BitTorrent installer
+  Delete "$INSTDIR\BitTorrent.exe"
 
   IfSilent "" +2 ; If the installer is always silent then you don't need this check
   Call LaunchLink
