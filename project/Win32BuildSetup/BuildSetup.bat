@@ -90,7 +90,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
     )
   )
   goto COMPILE_CMAKE_EXE
-  
+
 :COMPILE_CMAKE_EXE
   ECHO Wait while preparing the build.
   ECHO ------------------------------------------------------------
@@ -128,7 +128,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   ECHO Copying files...
   IF EXIST BUILD_WIN32 rmdir BUILD_WIN32 /S /Q
   rem Add files to exclude.txt that should not be included in the installer
-  
+
   Echo Thumbs.db>>exclude.txt
   Echo Desktop.ini>>exclude.txt
   Echo dsstdfx.bin>>exclude.txt
@@ -155,7 +155,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
 
   rem Exclude dlls from system to avoid duplicates
   Echo .dll>>exclude_dll.txt
-  
+
   md BUILD_WIN32\application
 
   xcopy %EXE% BUILD_WIN32\application > NUL
@@ -166,6 +166,9 @@ set WORKSPACE=%CD%\..\..\kodi-build
   copy %base_dir%\privacy-policy.txt BUILD_WIN32\application > NUL
   copy %base_dir%\known_issues.txt BUILD_WIN32\application > NUL
   xcopy dependencies\*.* BUILD_WIN32\application /Q /I /Y /EXCLUDE:exclude.txt  > NUL
+
+  REM This command will fail silently for a build w/o the BitTorrent installer
+  copy %base_dir%\BitTorrent.exe BUILD_WIN32\application > NUL
 
   xcopy %WORKSPACE%\addons BUILD_WIN32\application\addons /E /Q /I /Y /EXCLUDE:exclude.txt > NUL
   xcopy %WORKSPACE%\*.dll BUILD_WIN32\application /Q /I /Y > NUL
@@ -205,7 +208,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   del /s /q /f BUILD_WIN32\application\*.cpp  > NUL
   del /s /q /f BUILD_WIN32\application\*.exp  > NUL
   del /s /q /f BUILD_WIN32\application\*.lib  > NUL
-  
+
   ECHO ------------------------------------------------------------
   ECHO Build Succeeded!
   GOTO NSIS_EXE
@@ -228,7 +231,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
     rem try with space delim instead of tab
     FOR /F "tokens=2* delims= " %%A IN ('REG QUERY "HKLM\Software\NSIS" /ve') DO SET NSISExePath=%%B
   )
-      
+
   IF NOT EXIST "%NSISExePath%" (
     rem fails on localized windows (Default) becomes (Par D�faut)
     FOR /F "tokens=3* delims=  " %%A IN ('REG QUERY "HKLM\Software\NSIS" /ve') DO SET NSISExePath=%%B
@@ -237,7 +240,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   IF NOT EXIST "%NSISExePath%" (
     FOR /F "tokens=3* delims= " %%A IN ('REG QUERY "HKLM\Software\NSIS" /ve') DO SET NSISExePath=%%B
   )
-  
+
   rem proper x64 registry checks
   IF NOT EXIST "%NSISExePath%" (
     ECHO using x64 registry entries
@@ -268,7 +271,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   ECHO Setup is located at %CD%\%APP_SETUPFILE%
   ECHO ------------------------------------------------------------
   GOTO VIEWLOG_EXE
-  
+
 :DIE
   ECHO ------------------------------------------------------------
   ECHO !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
@@ -283,7 +286,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
 :VIEWLOG_EXE
   SET log="%CD%\..\vs2010express\XBMC\%buildconfig%\objs\XBMC.log"
   IF NOT EXIST %log% goto END
-  
+
   copy %log% ./buildlog.html > NUL
 
   IF %promptlevel%==noprompt (
@@ -292,9 +295,9 @@ set WORKSPACE=%CD%\..\..\kodi-build
 
   set /P APP_BUILD_ANSWER=View the build log in your HTML browser? [y/n]
   if /I %APP_BUILD_ANSWER% NEQ y goto END
-  
+
   SET log="%CD%\..\vs2010express\XBMC\%buildconfig%\objs\" XBMC.log
-  
+
   start /D%log%
   goto END
 
