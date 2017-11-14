@@ -18,6 +18,7 @@ FOR /f %%i IN ('%awk_exe% "/VERSION_MAJOR/ {print $2}" %base_dir%\version.txt') 
 FOR /f %%i IN ('%awk_exe% "/VERSION_MINOR/ {print $2}" %base_dir%\version.txt') DO SET MINOR=%%i
 FOR /f %%i IN ('%awk_exe% "/VERSION_TAG/ {print $2}" %base_dir%\version.txt') DO SET TAG=%%i
 FOR /f %%i IN ('%awk_exe% "/ADDON_API/ {print $2}" %base_dir%\version.txt') DO SET VERSION_NUMBER=%%i.0
+FOR /f %%i IN ('%awk_exe% "/BUILD_NUMBER/ {print $2}" %base_dir%\version.txt') DO SET BUILD_NUMBER=%%i
 
 SET APP_VERSION=%MAJOR%.%MINOR%
 IF NOT [%TAG%] == [] (
@@ -90,7 +91,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
     )
   )
   goto COMPILE_CMAKE_EXE
-  
+
 :COMPILE_CMAKE_EXE
   ECHO Wait while preparing the build.
   ECHO ------------------------------------------------------------
@@ -128,7 +129,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   ECHO Copying files...
   IF EXIST BUILD_WIN32 rmdir BUILD_WIN32 /S /Q
   rem Add files to exclude.txt that should not be included in the installer
-  
+
   Echo Thumbs.db>>exclude.txt
   Echo Desktop.ini>>exclude.txt
   Echo dsstdfx.bin>>exclude.txt
@@ -155,7 +156,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
 
   rem Exclude dlls from system to avoid duplicates
   Echo .dll>>exclude_dll.txt
-  
+
   md BUILD_WIN32\application
 
   xcopy %EXE% BUILD_WIN32\application > NUL
@@ -205,7 +206,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   del /s /q /f BUILD_WIN32\application\*.cpp  > NUL
   del /s /q /f BUILD_WIN32\application\*.exp  > NUL
   del /s /q /f BUILD_WIN32\application\*.lib  > NUL
-  
+
   ECHO ------------------------------------------------------------
   ECHO Build Succeeded!
   GOTO NSIS_EXE
@@ -228,7 +229,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
     rem try with space delim instead of tab
     FOR /F "tokens=2* delims= " %%A IN ('REG QUERY "HKLM\Software\NSIS" /ve') DO SET NSISExePath=%%B
   )
-      
+
   IF NOT EXIST "%NSISExePath%" (
     rem fails on localized windows (Default) becomes (Par D�faut)
     FOR /F "tokens=3* delims=  " %%A IN ('REG QUERY "HKLM\Software\NSIS" /ve') DO SET NSISExePath=%%B
@@ -237,7 +238,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   IF NOT EXIST "%NSISExePath%" (
     FOR /F "tokens=3* delims= " %%A IN ('REG QUERY "HKLM\Software\NSIS" /ve') DO SET NSISExePath=%%B
   )
-  
+
   rem proper x64 registry checks
   IF NOT EXIST "%NSISExePath%" (
     ECHO using x64 registry entries
@@ -257,7 +258,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   )
 
   SET NSISExe=%NSISExePath%\makensis.exe
-  "%NSISExe%" /V1 /X"SetCompressor /FINAL lzma" /Dapp_root="%CD%\BUILD_WIN32" /DAPP_NAME="%APP_NAME%" /DVERSION_NUMBER="%VERSION_NUMBER%" /DCOMPANY_NAME="%COMPANY_NAME%" /DWEBSITE="%WEBSITE%" /Dapp_revision="%GIT_REV%" /Dapp_target="%target%" /Dapp_branch="%BRANCH%" "genNsisInstaller.nsi"
+  "%NSISExe%" /V1 /X"SetCompressor /FINAL lzma" /Dapp_root="%CD%\BUILD_WIN32" /DAPP_NAME="%APP_NAME%" /DVERSION_NUMBER="%VERSION_NUMBER%" /DCOMPANY_NAME="%COMPANY_NAME%" /DWEBSITE="%WEBSITE%" /DBUILD_NUMBER="%BUILD_NUMBER%" /Dapp_revision="%GIT_REV%" /Dapp_target="%target%" /Dapp_branch="%BRANCH%" "genNsisInstaller.nsi"
   IF NOT EXIST "%APP_SETUPFILE%" (
     set DIETEXT=Failed to create %APP_SETUPFILE%. NSIS installed?
     goto DIE
@@ -268,7 +269,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   ECHO Setup is located at %CD%\%APP_SETUPFILE%
   ECHO ------------------------------------------------------------
   GOTO VIEWLOG_EXE
-  
+
 :DIE
   ECHO ------------------------------------------------------------
   ECHO !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-
@@ -283,7 +284,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
 :VIEWLOG_EXE
   SET log="%CD%\..\vs2010express\XBMC\%buildconfig%\objs\XBMC.log"
   IF NOT EXIST %log% goto END
-  
+
   copy %log% ./buildlog.html > NUL
 
   IF %promptlevel%==noprompt (
@@ -292,9 +293,9 @@ set WORKSPACE=%CD%\..\..\kodi-build
 
   set /P APP_BUILD_ANSWER=View the build log in your HTML browser? [y/n]
   if /I %APP_BUILD_ANSWER% NEQ y goto END
-  
+
   SET log="%CD%\..\vs2010express\XBMC\%buildconfig%\objs\" XBMC.log
-  
+
   start /D%log%
   goto END
 
