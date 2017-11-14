@@ -1,11 +1,12 @@
 APP_NAME Play
-COMPANY_NAME XBMC-Foundation
-WEBSITE http://kodi.tv
+COMPANY_NAME BitTorrent, Inc.
+WEBSITE http://bittorrent.com
 VERSION_MAJOR 17
 VERSION_MINOR 5
 VERSION_TAG
 VERSION_CODE 1745000
 ADDON_API 17.5.0
+BUILD_NUMBER 1
 
 # Notes:
 # Change AC_INIT in configure.ac
