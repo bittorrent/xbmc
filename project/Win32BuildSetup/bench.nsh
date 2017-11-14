@@ -25,38 +25,10 @@ Var _BenchStringCount
 	Pop $0
 	System::Call "Kernel32::GetSystemDefaultLocaleName(t,i)i(.r0,${NSIS_MAX_STRLEN})i"
 	StrCpy $LANG $0
-
 !macroend
-
 
 !macro BenchPing event status
-	inetc::post '{"ostype": "windows", "osv": "$OSV", "v": "${VERSION}.${BUILD_NUMBER}", "l": "$LANG", "cl": "${PRODUCT_NAME}","eventName": "${EVENT_NAME}", "action": "installer.${BUILD_NUMBER}.${event}.${status}", "installerRunID": "$INSTALL_GUID"}' /SILENT ${BENCH_URL} "$TEMP\utweb_install.log"
-!macroend
-
-!macro BenchPingSave status
-	Push $0
-	Push $1
-	Push $2
-	Push $3
-
-	StrCpy $1 $_BenchString
-
-	${If} $_BenchStringCount > 0
-		StrCpy $2 ',"${status}"'
-	${Else}
-		StrCpy $2 '"${status}"'
-	${EndIf}
-
-	StrCpy $1 "$1$2"
-	StrCpy $_BenchString $1
-	IntOp $_BenchStringCount $_BenchStringCount + 1
-
-	Pop $3
-	Pop $2
-	Pop $1
+	inetc::post '{"ostype": "windows", "osv": "$OSV", "v": "${VERSION_NUMBER}.${BUILD_NUMBER}", "l": "$LANG", "cl": "${APP_NAME}","eventName": "${APP_NAME}", "action": "installer.${BUILD_NUMBER}.${event}.${status}", "installerRunID": "$INSTALL_GUID"}' /SILENT ${BENCH_URL} /END
 	Pop $0
-!macroend
-
-!macro BenchPingFlush event
-	inetc::post '{"ostype": "windows", "osv": "$OSV", "v": "${VERSION}.${BUILD_NUMBER}", "l": "$LANG", "cl": "${PRODUCT_NAME}","eventName": "${EVENT_NAME}", "action": "status.${BUILD_NUMBER}.${event}", "status": [$_BenchString], "installerRunID": "$INSTALL_GUID"}' /SILENT ${BENCH_URL} "$TEMP\utweb_install.log"
+  ; MessageBox MB_OK|MB_ICONEXCLAMATION 'DEBUG: http result: $0 for ${BENCH_URL} ostype:windows osv:$OSV v:${VERSION_NUMBER}.${BUILD_NUMBER} l:$LANG cl:${APP_NAME} eventName:${APP_NAME} action: installer.${BUILD_NUMBER}.${event}.${status}' /SD IDOK
 !macroend
