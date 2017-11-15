@@ -373,6 +373,8 @@ Function .onInit
   ; Initialize bench ping system variables (installer)
   !insertmacro initBenchPing
 
+  !insertmacro BenchPing "install" "start"
+
   ; WinVista SP2 is minimum requirement
   ${IfNot} ${AtLeastWinVista}
   ${OrIf} ${IsWinVista}
