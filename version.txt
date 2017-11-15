@@ -1,5 +1,5 @@
 APP_NAME Play
-COMPANY_NAME BitTorrent, Inc.
+COMPANY_NAME BitTorrent
 WEBSITE http://bittorrent.com
 VERSION_MAJOR 17
 VERSION_MINOR 6
