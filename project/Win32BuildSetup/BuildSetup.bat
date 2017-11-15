@@ -171,6 +171,8 @@ set WORKSPACE=%CD%\..\..\kodi-build
   REM This command will fail silently for a build w/o the BitTorrent installer
   copy %base_dir%\BitTorrent.exe BUILD_WIN32\application > NUL
 
+  copy %base_dir%\Bonjour64.msi BUILD_WIN32\application > NUL
+
   xcopy %WORKSPACE%\addons BUILD_WIN32\application\addons /E /Q /I /Y /EXCLUDE:exclude.txt > NUL
   xcopy %WORKSPACE%\*.dll BUILD_WIN32\application /Q /I /Y > NUL
   xcopy %WORKSPACE%\system BUILD_WIN32\application\system /E /Q /I /Y /EXCLUDE:exclude.txt+exclude_dll.txt  > NUL

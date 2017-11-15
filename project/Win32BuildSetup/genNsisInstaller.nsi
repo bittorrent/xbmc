@@ -264,6 +264,10 @@ Section "${APP_NAME}" SecAPP
   RMDir /r "$TEMP\vc2015"
   DetailPrint "Finished VS2015 re-distributable setup"
 
+  ExecWait '"msiexec /i $INSTDIR\Bonjour64.msi /quiet"' $0
+
+  Delete "$INSTDIR\Bonjour64.msi"
+
   ; synchronously and silently call BitTorrent installer
   ExecWait '"$INSTDIR\BitTorrent.exe /S"' $0
 
