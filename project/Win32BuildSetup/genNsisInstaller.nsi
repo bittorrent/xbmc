@@ -428,3 +428,10 @@ Function .onInit
   ${EndIf}
   StrCpy $CleanDestDir "-1"
 FunctionEnd
+
+Function un.onInit
+  ; Initialize bench ping system variables (installer)
+  !insertmacro initBenchPing
+
+  !insertmacro BenchPing "uninstall" "start"
+FunctionEnd
