@@ -1,14 +1,35 @@
 ;Application for Windows install script
-;Copyright (C) 2005-2013 Team XBMC
-;http://xbmc.org
+
+# Requirements
+# NSIS 3.0: http://nsis.sourceforge.net/Download
+# Inetc: http://nsis.sourceforge.net/Inetc_plug-in
+# nsisFirewall 1.2: http://wiz0u.free.fr/prog/nsisFirewall/
+
+# Required compile time defines
+# COMPANY_NAME
+# APP_NAME
+# VERSION_NUMBER
+# BUILD_NUMBER
 
 ;--------------------------------
 ;Include Modern UI
 
-  !include "MUI2.nsh"
-  !include "nsDialogs.nsh"
-  !include "LogicLib.nsh"
-  !include "WinVer.nsh"
+!include "MUI2.nsh"
+!include "nsDialogs.nsh"
+!include "LogicLib.nsh"
+!include "WinVer.nsh"
+
+;--------------------------------
+;Include custom functions
+
+!include bench.nsh
+!include create_guid.nsh
+
+;--------------------------------
+;Global vars for bench
+Var /GLOBAL OSV
+Var /GLOBAL LANG
+Var /GLOBAL INSTALL_GUID
 
 ;--------------------------------
 ;General
@@ -47,6 +68,8 @@
   Var VSRedistSetupError
   Var /GLOBAL CleanDestDir
 
+  !define BENCH_URL "http://i-5500.b-${BUILD_NUMBER}.${APP_NAME}.bench.utorrent.com/e?i=5500"
+
 ;--------------------------------
 ;Interface Settings
 
@@ -69,19 +92,22 @@
   !insertmacro MUI_PAGE_WELCOME
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
   !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
+  !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
+  !define MUI_CUSTOMFUNCTION_ABORT muiOnUserAbort
 
   !insertmacro MUI_UNPAGE_WELCOME
   !insertmacro MUI_UNPAGE_CONFIRM
   UninstPage custom un.UnPageProfile un.UnPageProfileLeave
   !insertmacro MUI_UNPAGE_INSTFILES
   !insertmacro MUI_UNPAGE_FINISH
+  !define MUI_CUSTOMFUNCTION_UNABORT un.muiOnUserAbortUninstall
 
 ;--------------------------------
 ;Languages
 
-  !insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
 ;HelperFunction
@@ -148,6 +174,12 @@ Function DeinstallKodiInDestDir
     ;this also removes the uninstall.exe which doesn't remove it self...
     Delete "$INSTDIR\uninstall.exe"
   ${EndIf}
+FunctionEnd
+
+Function onError
+	${If} ${Abort}
+		!insertmacro BenchPing "install" "fail"
+	${EndIf}
 FunctionEnd
 
 ;--------------------------------
@@ -317,7 +349,33 @@ Section "Uninstall"
 
 SectionEnd
 
+; Abort handlers
+;-------------------
+Function muiOnUserAbort
+	!insertmacro BenchPing "install" "cancel"
+FunctionEnd
+
+Function un.muiOnUserAbortUninstall
+	!insertmacro BenchPing "uninstall" "cancel"
+FunctionEnd
+
+; Install/Uninstall success handlers
+;-------------------
+
+Function .onInstSuccess
+  !insertmacro BenchPing "install" "success"
+FunctionEnd
+
+Function un.onUninstSuccess
+  !insertmacro BenchPing "uninstall" "success"
+FunctionEnd
+
 Function .onInit
+  ; Initialize bench ping system variables (installer)
+  !insertmacro initBenchPing
+
+  !insertmacro BenchPing "install" "start"
+
   ; WinVista SP2 is minimum requirement
   ${IfNot} ${AtLeastWinVista}
   ${OrIf} ${IsWinVista}
@@ -369,4 +427,11 @@ Function .onInit
     SetOutPath "$INSTDIR"
   ${EndIf}
   StrCpy $CleanDestDir "-1"
+FunctionEnd
+
+Function un.onInit
+  ; Initialize bench ping system variables (installer)
+  !insertmacro initBenchPing
+
+  !insertmacro BenchPing "uninstall" "start"
 FunctionEnd
