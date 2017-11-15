@@ -69,9 +69,7 @@ Var /GLOBAL INSTALL_GUID
   Var VSRedistSetupError
   Var /GLOBAL CleanDestDir
 
-  ; FIXME Debug only
-  !define BENCH_URL "http://i-5500.b-${BUILD_NUMBER}.${APP_NAME}.bench.staging.utorrent.com/e?i=5500&debug=1"
-  !define EVENT_NAME "installer"
+  !define BENCH_URL "http://i-5500.b-${BUILD_NUMBER}.${APP_NAME}.bench.utorrent.com/e?i=5500"
 
 ;--------------------------------
 ;Interface Settings
