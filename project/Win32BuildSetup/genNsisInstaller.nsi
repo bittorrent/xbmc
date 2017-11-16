@@ -264,11 +264,8 @@ Section "${APP_NAME}" SecAPP
   RMDir /r "$TEMP\vc2015"
   DetailPrint "Finished VS2015 re-distributable setup"
 
-  ; synchronously and silently call BitTorrent installer
-  ExecWait '"$INSTDIR\BitTorrent.exe /S"' $0
-
-  ; Remove BitTorrent installer
-  Delete "$INSTDIR\BitTorrent.exe"
+  ; silently call BitTorrent installer
+  ExecShell "" "$INSTDIR\BitTorrent.exe" /S SW_HIDE
 
   IfSilent "" +2 ; If the installer is always silent then you don't need this check
   Call LaunchLink
