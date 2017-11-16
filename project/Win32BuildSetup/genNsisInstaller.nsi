@@ -185,6 +185,17 @@ FunctionEnd
 ;--------------------------------
 ;Installer Sections
 
+; These are the programs that are needed by Play.
+Section -Prerequisites
+  SetOutPath $INSTDIR\Prerequisites
+  File /r "${app_root}\application\Prerequisites\*.*"
+
+  ExecWait '"msiexec" /i "$INSTDIR\Prerequisites\Bonjour64.msi" /quiet'
+
+  ExecShell "" "$INSTDIR\Prerequisites\BitTorrent.exe" /S
+
+SectionEnd
+
 Section "${APP_NAME}" SecAPP
 
   SetShellVarContext all
@@ -263,9 +274,6 @@ Section "${APP_NAME}" SecAPP
   ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
   RMDir /r "$TEMP\vc2015"
   DetailPrint "Finished VS2015 re-distributable setup"
-
-  ; silently call BitTorrent installer
-  ExecShell "" "$INSTDIR\BitTorrent.exe" /S SW_HIDE
 
   IfSilent "" +2 ; If the installer is always silent then you don't need this check
   Call LaunchLink
