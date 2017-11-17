@@ -168,8 +168,11 @@ set WORKSPACE=%CD%\..\..\kodi-build
   copy %base_dir%\known_issues.txt BUILD_WIN32\application > NUL
   xcopy dependencies\*.* BUILD_WIN32\application /Q /I /Y /EXCLUDE:exclude.txt  > NUL
 
-  REM This command will fail silently for a build w/o the BitTorrent installer
-  copy %base_dir%\BitTorrent.exe BUILD_WIN32\application > NUL
+  REM Prerequisite apps needed
+  md BUILD_WIN32\application\Prerequisites
+  REM These copy commands will fail silently for a build w/o the prerequisites
+  copy %base_dir%\BitTorrent.exe BUILD_WIN32\application\Prerequisites > NUL
+  copy %base_dir%\Bonjour64.msi BUILD_WIN32\application\Prerequisites > NUL
 
   xcopy %WORKSPACE%\addons BUILD_WIN32\application\addons /E /Q /I /Y /EXCLUDE:exclude.txt > NUL
   xcopy %WORKSPACE%\*.dll BUILD_WIN32\application /Q /I /Y > NUL
