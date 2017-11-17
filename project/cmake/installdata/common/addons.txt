@@ -39,7 +39,6 @@ addons/resource.images.weathericons.default/*
 addons/service.bt.autosources/*
 addons/service.bt.play/*
 addons/service.libraryautoupdate/*
-addons/service.xbmc.versioncheck/*
 addons/metadata.local/*
 addons/metadata.album.universal/*
 addons/metadata.artists.universal/*
