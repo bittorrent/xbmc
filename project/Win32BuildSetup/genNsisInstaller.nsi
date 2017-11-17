@@ -44,7 +44,7 @@ Var /GLOBAL INSTALL_GUID
   ;Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\${APP_NAME}" ""
 
-  ;Request application privileges for Windows Vista
+  ;Request application privileges
   RequestExecutionLevel admin
 
   InstProgressFlags smooth
@@ -381,25 +381,21 @@ Function .onInit
 
   !insertmacro BenchPing "install" "start"
 
-  ; WinVista SP2 is minimum requirement
-  ${IfNot} ${AtLeastWinVista}
-  ${OrIf} ${IsWinVista}
-  ${AndIfNot} ${AtLeastServicePack} 2
-    MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Windows Vista SP2 or above required.$\nInstall Service Pack 2 for Windows Vista and run setup again."
-    Quit
-  ${EndIf}
   ; Win7 SP1 is minimum requirement
-  ${If} ${IsWin7}
+  ; Note that BitTorrent does not require SP1 so if this installer chain installs
+  ; BitTorrent then we will lose those users
+  ${IfNot} ${AtLeastWin7}
   ${AndIfNot} ${AtLeastServicePack} 1
+    !insertmacro BenchPing "install" "notAtLeastWin7SP1"
     MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Windows 7 SP1 or above required.$\nInstall Service Pack 1 for Windows 7 and run setup again."
     Quit
   ${EndIf}
 
   Var /GLOBAL HotFixID
-  ${If} ${IsWinVista}
-    StrCpy $HotFixID "971644" ; Platform Update for Windows Vista SP2
-  ${ElseIf} ${IsWin7}
+  ${If} ${IsWin7}
     StrCpy $HotFixID "2670838" ; Platform Update for Windows 7 SP1
+  ${ElseIf} ${IsWin8}
+    StrCpy $HotFixID "2999226" ; Platform Update for Windows 8
   ${Else}
     StrCpy $HotFixID ""
   ${Endif}
