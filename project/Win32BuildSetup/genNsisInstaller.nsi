@@ -113,11 +113,7 @@ Var /GLOBAL INSTALL_GUID
 ;HelperFunction
 
 Function LaunchLink
-  ${If} ${AtLeastWin10}
-    ExecShell "open" "$SMPROGRAMS\${APP_NAME}-minimized.lnk"
-  ${Else}
-    ExecShell "open" "$SMPROGRAMS\${APP_NAME}.lnk"
-  ${EndIf}
+  ExecShell "open" "$SMPROGRAMS\${APP_NAME}.lnk"
 FunctionEnd
 
 Function CallbackDirLeave
@@ -247,18 +243,15 @@ Section "${APP_NAME}" SecAPP
   ;Create shortcuts
   SetOutPath "$INSTDIR"
 
-  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-                  "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-                  "" "Start ${APP_NAME}."
   ${If} ${AtLeastWin10}
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}-minimized.lnk" "$INSTDIR\${APP_NAME}.exe" \
+    CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
                     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWMINIMIZED \
-                    "" "Start ${APP_NAME} minimized."
+                    "" "Start ${APP_NAME}."
+  ${Else}
+    CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+                    "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+                    "" "Start ${APP_NAME}."
   ${EndIf}
-
-  CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
-                  "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
-                  "" "Uninstall ${APP_NAME}."
 
   WriteINIStr "$SMPROGRAMS\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
 
@@ -327,6 +320,8 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\media"
   RMDir /r "$INSTDIR\system"
   RMDir /r "$INSTDIR\userdata"
+  RMDir /r "$INSTDIR\Prerequisites"
+  RMDir /r "$INSTDIR\updates"
   Delete "$INSTDIR\*.*"
 
   ;Un-install User Data if option is checked, otherwise skip
@@ -339,10 +334,6 @@ Section "Uninstall"
   RMDir "$INSTDIR"
 
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
-  ${If} ${AtLeastWin10}
-    Delete "$SMPROGRAMS\${APP_NAME}-minimized.lnk"
-  ${EndIf}
-  Delete "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\Visit ${APP_NAME} Online.url"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
