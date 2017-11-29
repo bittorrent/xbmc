@@ -22,6 +22,7 @@
 ;--------------------------------
 ;Include custom functions
 
+!include "UAC.nsh"
 !include bench.nsh
 !include create_guid.nsh
 
@@ -30,6 +31,9 @@
 Var /GLOBAL OSV
 Var /GLOBAL LANG
 Var /GLOBAL INSTALL_GUID
+
+; This is required by the UAC plugin
+RequestExecutionLevel user
 
 ;--------------------------------
 ;General
@@ -43,9 +47,6 @@ Var /GLOBAL INSTALL_GUID
 
   ;Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\${APP_NAME}" ""
-
-  ;Request application privileges
-  RequestExecutionLevel admin
 
   InstProgressFlags smooth
 
@@ -70,12 +71,15 @@ Var /GLOBAL INSTALL_GUID
 
   !define BENCH_URL "http://i-5500.b-${BUILD_NUMBER}.${APP_NAME}.bench.utorrent.com/e?i=5500"
 
+  !define START_EXE "${APP_NAME}.exe"
+  !define ICON "..\..\tools\windows\packaging\media\application.ico"
+
 ;--------------------------------
 ;Interface Settings
 
   !define MUI_HEADERIMAGE
-  !define MUI_ICON "..\..\tools\windows\packaging\media\application.ico"
-  !define MUI_UNICON "..\..\tools\windows\packaging\media\application.ico"
+  !define MUI_ICON "${ICON}"
+  !define MUI_UNICON "${ICON}"
   !define MUI_HEADERIMAGE_BITMAP "..\..\tools\windows\packaging\media\installer\header.bmp"
   !define MUI_HEADERIMAGE_UNBITMAP "..\..\tools\windows\packaging\media\installer\header.bmp"
   !define MUI_WELCOMEFINISHPAGE_BITMAP "..\..\tools\windows\packaging\media\installer\welcome-left.bmp"
@@ -83,8 +87,8 @@ Var /GLOBAL INSTALL_GUID
   !define MUI_FINISHPAGE_LINK "Please visit ${WEBSITE} for more information."
   !define MUI_FINISHPAGE_LINK_LOCATION "${WEBSITE}"
   !define MUI_FINISHPAGE_RUN
-  !define MUI_FINISHPAGE_RUN_CHECKED
-  !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
+  !define MUI_FINISHPAGE_RUN_UNCHECKED
+  !define MUI_FINISHPAGE_RUN_FUNCTION "RunApplication"
   !define MUI_ABORTWARNING
 ;--------------------------------
 ;Pages
@@ -112,8 +116,16 @@ Var /GLOBAL INSTALL_GUID
 ;--------------------------------
 ;HelperFunction
 
-Function LaunchLink
-  ExecShell "open" "$SMPROGRAMS\${APP_NAME}.lnk"
+Function RunApplication
+  ; Run app with the calculated flags
+  ; DEV Note: Add extra startup flags here by
+  ; concatenating onto $2
+  StrCpy $1 "${START_EXE}"
+  StrCpy $2 ""
+
+  !insertmacro BenchPing "install" "RunApplication"
+
+  !insertmacro UAC_AsUser_ExecShell "" "$1" "$2" "$INSTDIR" "SW_SHOWMINIMIZED"
 FunctionEnd
 
 Function CallbackDirLeave
@@ -173,9 +185,9 @@ Function DeinstallKodiInDestDir
 FunctionEnd
 
 Function onError
-	${If} ${Abort}
-		!insertmacro BenchPing "install" "fail"
-	${EndIf}
+  ${If} ${Abort}
+  !insertmacro BenchPing "install" "fail"
+  ${EndIf}
 FunctionEnd
 
 ;--------------------------------
@@ -184,17 +196,21 @@ FunctionEnd
 ; These are the programs that are needed by Play.
 Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
-  File /r "${app_root}\application\Prerequisites\*.*"
+  File /nonfatal /r "${app_root}\application\Prerequisites\*.*"
 
-  ExecWait '"msiexec" /i "$INSTDIR\Prerequisites\Bonjour64.msi" /quiet'
+  !define BONJOUR "$INSTDIR\Prerequisites\Bonjour64.msi"
+  !define BITTORRENT "$INSTDIR\Prerequisites\BitTorrent.exe"
 
-  ExecShell "" "$INSTDIR\Prerequisites\BitTorrent.exe" /S
+  IfFileExists "${BONJOUR}" 0 +2
+    ExecWait '"msiexec" /i "${BONJOUR}" /quiet'
+
+  IfFileExists "${BITTORRENT}" 0 +2
+    ExecShell "" "${BITTORRENT}" /S
 
 SectionEnd
 
 Section "${APP_NAME}" SecAPP
 
-  SetShellVarContext all
   SectionIn RO
 
   ;deinstall kodi in destination dir if $CleanDestDir == "1" - meaning user has confirmed it
@@ -232,7 +248,7 @@ Section "${APP_NAME}" SecAPP
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "DisplayIcon" "$INSTDIR\${APP_NAME}.exe,0"
+                 "DisplayIcon" "$INSTDIR\${START_EXE},0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "Publisher" "${COMPANY_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
@@ -243,20 +259,19 @@ Section "${APP_NAME}" SecAPP
   ;Create shortcuts
   SetOutPath "$INSTDIR"
 
-  ${If} ${AtLeastWin10}
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-                    "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWMINIMIZED \
-                    "" "Start ${APP_NAME}."
-  ${Else}
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-                    "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-                    "" "Start ${APP_NAME}."
-  ${EndIf}
+  ;Extract icon
+  File "${ICON}"
+  createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
 
-  WriteINIStr "$SMPROGRAMS\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
+  ;Start Menu
+  createShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+
+  ;Startup
+  createShortCut "$SMSTARTUP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" \
+                  "" "$INSTDIR\application.ico" 0 SW_SHOWMINIMIZED
 
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
-  nsisFirewall::AddAuthorizedApplication "$INSTDIR\${APP_NAME}.exe" "${APP_NAME}"
+  nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
   nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
   Pop $0
 
@@ -267,9 +282,6 @@ Section "${APP_NAME}" SecAPP
   ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
   RMDir /r "$TEMP\vc2015"
   DetailPrint "Finished VS2015 re-distributable setup"
-
-  IfSilent "" +2 ; If the installer is always silent then you don't need this check
-  Call LaunchLink
 
 SectionEnd
 
@@ -312,8 +324,6 @@ FunctionEnd
 
 Section "Uninstall"
 
-  SetShellVarContext all
-
   ;ADD YOUR OWN FILES HERE...
   RMDir /r "$INSTDIR\addons"
   RMDir /r "$INSTDIR\language"
@@ -326,20 +336,20 @@ Section "Uninstall"
 
   ;Un-install User Data if option is checked, otherwise skip
   ${If} $UnPageProfileCheckbox_State == ${BST_CHECKED}
-    SetShellVarContext current
     RMDir /r "$APPDATA\${APP_NAME}\"
-    SetShellVarContext all
     RMDir /r "$INSTDIR\portable_data\"
   ${EndIf}
   RMDir "$INSTDIR"
 
+  Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\Visit ${APP_NAME} Online.url"
+  Delete "$SMSTARTUP\${APP_NAME}.lnk"
+
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
 
   ;remove firewall exceptions for app and script.bt.transcode addon ffmpeg
-  nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${APP_NAME}.exe"
+  nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${START_EXE}"
   nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe"
   Pop $0
 
@@ -348,17 +358,18 @@ SectionEnd
 ; Abort handlers
 ;-------------------
 Function muiOnUserAbort
-	!insertmacro BenchPing "install" "cancel"
+  !insertmacro BenchPing "install" "cancel"
 FunctionEnd
 
 Function un.muiOnUserAbortUninstall
-	!insertmacro BenchPing "uninstall" "cancel"
+  !insertmacro BenchPing "uninstall" "cancel"
 FunctionEnd
 
 ; Install/Uninstall success handlers
 ;-------------------
 
 Function .onInstSuccess
+  Call RunApplication
   !insertmacro BenchPing "install" "success"
 FunctionEnd
 
@@ -371,6 +382,34 @@ Function .onInit
   !insertmacro initBenchPing
 
   !insertmacro BenchPing "install" "start"
+
+  ; Elevate with the UAC plugin. Code below derived from:
+  ; http://nsis.sourceforge.net/UAC_plug-in
+  ; The switch below is necessary to handle elevation failures
+  ; and secondary process termination on successes (and failures)
+  uac_tryagain:
+  !insertmacro UAC_RunElevated
+  ${Switch} $0
+  ${Case} 0
+  ${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
+  ${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
+  ${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+  MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "Installing ${APP_NAME} requires admin privileges, please try again" /SD IDNO IDYES uac_tryagain IDNO 0
+  ${EndIf}
+  ;fall-through and die
+  ${Case} 1223
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Installing ${APP_NAME} requires admin privileges, aborting!"
+    !insertmacro BenchPing "install" "error_elevation_noadmin"
+  Quit
+  ${Case} 1062
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
+    !insertmacro BenchPing "install" "error_elevation_nologon"
+  Quit
+  ${Default}
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+    !insertmacro BenchPing "install" "error_elevation_abort"
+  Quit
+  ${EndSwitch}
 
   ; Win7 SP1 is minimum requirement
   ; Note that BitTorrent does not require SP1 so if this installer chain installs
