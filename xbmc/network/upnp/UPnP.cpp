@@ -639,12 +639,12 @@ CUPnP::CreateServer(int port /* = 0 */)
                     CSettings::GetInstance().GetInt(CSettings::SETTING_SERVICES_WEBSERVERPORT),
                     "/").ToString();
 
-    device->m_ModelName        = "Kodi";
+    device->m_ModelName        = "Play";
     device->m_ModelNumber      = CSysInfo::GetVersion().c_str();
-    device->m_ModelDescription = "Kodi - Media Server";
-    device->m_ModelURL         = "http://kodi.tv/";
-    device->m_Manufacturer     = "XBMC Foundation";
-    device->m_ManufacturerURL  = "http://kodi.tv/";
+    device->m_ModelDescription = "Play - Media Server";
+    device->m_ModelURL         = "http://bittorrent.com";
+    device->m_Manufacturer     = "BitTorrent Inc.";
+    device->m_ManufacturerURL  = "http://bittorrent.com";
 
     device->SetDelegate(device);
     return device;
