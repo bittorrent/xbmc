@@ -15,6 +15,6 @@
 	url = https://github.com/bittorrent/service.bt.autosources.git
 	branch = master
 [submodule "addons/service.libraryautoupdate"]
-	path = addons/service.libraryautoupdate
+	path = addons/service.bt.libraryautoupdate
 	url = https://github.com/bittorrent/xbmclibraryautoupdate.git
 	branch = master

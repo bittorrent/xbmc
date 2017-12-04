@@ -38,8 +38,7 @@ addons/resource.uisounds.kodi/*
 addons/resource.images.weathericons.default/*
 addons/service.bt.autosources/*
 addons/service.bt.play/*
-addons/service.libraryautoupdate/*
-addons/service.xbmc.versioncheck/*
+addons/service.bt.libraryautoupdate/*
 addons/metadata.local/*
 addons/metadata.album.universal/*
 addons/metadata.artists.universal/*

@@ -4,7 +4,7 @@
     <category id="general">
       <group id="2">
         <setting id="services.zeroconf">
-          <default>false</default>
+          <default>true</default>
         </setting>
       </group>
     </category>

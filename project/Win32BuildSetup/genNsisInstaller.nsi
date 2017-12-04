@@ -1,14 +1,39 @@
 ;Application for Windows install script
-;Copyright (C) 2005-2013 Team XBMC
-;http://xbmc.org
+
+# Requirements
+# NSIS 3.0: http://nsis.sourceforge.net/Download
+# Inetc: http://nsis.sourceforge.net/Inetc_plug-in
+# nsisFirewall 1.2: http://wiz0u.free.fr/prog/nsisFirewall/
+
+# Required compile time defines
+# COMPANY_NAME
+# APP_NAME
+# VERSION_NUMBER
+# BUILD_NUMBER
 
 ;--------------------------------
 ;Include Modern UI
 
-  !include "MUI2.nsh"
-  !include "nsDialogs.nsh"
-  !include "LogicLib.nsh"
-  !include "WinVer.nsh"
+!include "MUI2.nsh"
+!include "nsDialogs.nsh"
+!include "LogicLib.nsh"
+!include "WinVer.nsh"
+
+;--------------------------------
+;Include custom functions
+
+!include "UAC.nsh"
+!include bench.nsh
+!include create_guid.nsh
+
+;--------------------------------
+;Global vars for bench
+Var /GLOBAL OSV
+Var /GLOBAL LANG
+Var /GLOBAL INSTALL_GUID
+
+; This is required by the UAC plugin
+RequestExecutionLevel user
 
 ;--------------------------------
 ;General
@@ -22,9 +47,6 @@
 
   ;Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\${APP_NAME}" ""
-
-  ;Request application privileges for Windows Vista
-  RequestExecutionLevel admin
 
   InstProgressFlags smooth
 
@@ -47,20 +69,26 @@
   Var VSRedistSetupError
   Var /GLOBAL CleanDestDir
 
+  !define BENCH_URL "http://i-5500.b-${BUILD_NUMBER}.${APP_NAME}.bench.utorrent.com/e?i=5500"
+
+  !define START_EXE "${APP_NAME}.exe"
+  !define ICON "..\..\tools\windows\packaging\media\application.ico"
+
 ;--------------------------------
 ;Interface Settings
 
   !define MUI_HEADERIMAGE
-  !define MUI_ICON "..\..\tools\windows\packaging\media\application.ico"
-  !define MUI_UNICON "..\..\tools\windows\packaging\media\application.ico"
+  !define MUI_ICON "${ICON}"
+  !define MUI_UNICON "${ICON}"
   !define MUI_HEADERIMAGE_BITMAP "..\..\tools\windows\packaging\media\installer\header.bmp"
   !define MUI_HEADERIMAGE_UNBITMAP "..\..\tools\windows\packaging\media\installer\header.bmp"
   !define MUI_WELCOMEFINISHPAGE_BITMAP "..\..\tools\windows\packaging\media\installer\welcome-left.bmp"
   !define MUI_UNWELCOMEFINISHPAGE_BITMAP "..\..\tools\windows\packaging\media\installer\welcome-left.bmp"
   !define MUI_FINISHPAGE_LINK "Please visit ${WEBSITE} for more information."
   !define MUI_FINISHPAGE_LINK_LOCATION "${WEBSITE}"
-  !define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}.exe"
-  !define MUI_FINISHPAGE_RUN_NOTCHECKED
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_UNCHECKED
+  !define MUI_FINISHPAGE_RUN_FUNCTION "RunApplication"
   !define MUI_ABORTWARNING
 ;--------------------------------
 ;Pages
@@ -68,22 +96,37 @@
   !insertmacro MUI_PAGE_WELCOME
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
   !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
+  !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
+  !define MUI_CUSTOMFUNCTION_ABORT muiOnUserAbort
 
   !insertmacro MUI_UNPAGE_WELCOME
   !insertmacro MUI_UNPAGE_CONFIRM
   UninstPage custom un.UnPageProfile un.UnPageProfileLeave
   !insertmacro MUI_UNPAGE_INSTFILES
   !insertmacro MUI_UNPAGE_FINISH
+  !define MUI_CUSTOMFUNCTION_UNABORT un.muiOnUserAbortUninstall
 
 ;--------------------------------
 ;Languages
 
-  !insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
 ;HelperFunction
+
+Function RunApplication
+  ; Run app with the calculated flags
+  ; DEV Note: Add extra startup flags here by
+  ; concatenating onto $2
+  StrCpy $1 "${START_EXE}"
+  StrCpy $2 ""
+
+  !insertmacro BenchPing "install" "RunApplication"
+
+  !insertmacro UAC_AsUser_ExecShell "" "$1" "$2" "$INSTDIR" "SW_SHOWMINIMIZED"
+FunctionEnd
 
 Function CallbackDirLeave
   ;deinstall kodi if it is already there in destination folder
@@ -141,11 +184,33 @@ Function DeinstallKodiInDestDir
   ${EndIf}
 FunctionEnd
 
+Function onError
+  ${If} ${Abort}
+  !insertmacro BenchPing "install" "fail"
+  ${EndIf}
+FunctionEnd
+
 ;--------------------------------
 ;Installer Sections
 
+; These are the programs that are needed by Play.
+Section -Prerequisites
+  SetOutPath $INSTDIR\Prerequisites
+  File /nonfatal /r "${app_root}\application\Prerequisites\*.*"
+
+  !define BONJOUR "$INSTDIR\Prerequisites\Bonjour64.msi"
+  !define BITTORRENT "$INSTDIR\Prerequisites\BitTorrent.exe"
+
+  IfFileExists "${BONJOUR}" 0 +2
+    ExecWait '"msiexec" /i "${BONJOUR}" /quiet'
+
+  IfFileExists "${BITTORRENT}" 0 +2
+    ExecShell "" "${BITTORRENT}" /S
+
+SectionEnd
+
 Section "${APP_NAME}" SecAPP
-  SetShellVarContext all
+
   SectionIn RO
 
   ;deinstall kodi in destination dir if $CleanDestDir == "1" - meaning user has confirmed it
@@ -163,16 +228,6 @@ Section "${APP_NAME}" SecAPP
   File /r "${app_root}\application\system\*.*"
   SetOutPath "$INSTDIR\userdata"
   File /r "${app_root}\application\userdata\*.*"
-
-  ; audio encoder addons
-  SetOutPath "$INSTDIR\addons\audioencoder.flac"
-  File /r "${app_root}\addons\audioencoder.flac\*.*"
-  SetOutPath "$INSTDIR\addons\audioencoder.lame"
-  File /r "${app_root}\addons\audioencoder.lame\*.*"
-  SetOutPath "$INSTDIR\addons\audioencoder.vorbis"
-  File /r "${app_root}\addons\audioencoder.vorbis\*.*"
-  SetOutPath "$INSTDIR\addons\audioencoder.wav"
-  File /r "${app_root}\addons\audioencoder.wav\*.*"
 
   ;Store installation folder
   WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
@@ -193,7 +248,7 @@ Section "${APP_NAME}" SecAPP
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "DisplayIcon" "$INSTDIR\${APP_NAME}.exe,0"
+                 "DisplayIcon" "$INSTDIR\${START_EXE},0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "Publisher" "${COMPANY_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
@@ -204,22 +259,25 @@ Section "${APP_NAME}" SecAPP
   ;Create shortcuts
   SetOutPath "$INSTDIR"
 
-  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-                  "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-                  "" "Start ${APP_NAME}."
-  CreateShortCut "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
-                  "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
-                  "" "Uninstall ${APP_NAME}."
+  ;Extract icon
+  File "${ICON}"
+  createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
 
-  WriteINIStr "$SMPROGRAMS\Visit ${APP_NAME} Online.url" "InternetShortcut" "URL" "${WEBSITE}"
+  ;Start Menu
+  createShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+
+  ;Startup
+  createShortCut "$SMSTARTUP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" \
+                  "" "$INSTDIR\application.ico" 0 SW_SHOWMINIMIZED
 
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
-  nsisFirewall::AddAuthorizedApplication "$INSTDIR\${APP_NAME}.exe" "${APP_NAME}"
+  nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
   nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
   Pop $0
 
   ;vs redist installer Section
   SetOutPath "$TEMP\vc2015"
+
   File "${app_root}\..\dependencies\vcredist\2015\vcredist_x86.exe"
   ExecWait '"$TEMP\vc2015\vcredist_x86.exe" /install /quiet /norestart' $VSRedistSetupError
   RMDir /r "$TEMP\vc2015"
@@ -266,58 +324,113 @@ FunctionEnd
 
 Section "Uninstall"
 
-  SetShellVarContext all
-
   ;ADD YOUR OWN FILES HERE...
   RMDir /r "$INSTDIR\addons"
   RMDir /r "$INSTDIR\language"
   RMDir /r "$INSTDIR\media"
   RMDir /r "$INSTDIR\system"
   RMDir /r "$INSTDIR\userdata"
+  RMDir /r "$INSTDIR\Prerequisites"
+  RMDir /r "$INSTDIR\updates"
   Delete "$INSTDIR\*.*"
 
   ;Un-install User Data if option is checked, otherwise skip
   ${If} $UnPageProfileCheckbox_State == ${BST_CHECKED}
-    SetShellVarContext current
     RMDir /r "$APPDATA\${APP_NAME}\"
-    SetShellVarContext all
     RMDir /r "$INSTDIR\portable_data\"
   ${EndIf}
   RMDir "$INSTDIR"
 
+  Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\Uninstall ${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\Visit ${APP_NAME} Online.url"
+  Delete "$SMSTARTUP\${APP_NAME}.lnk"
+
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
 
   ;remove firewall exceptions for app and script.bt.transcode addon ffmpeg
-  nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${APP_NAME}.exe"
+  nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${START_EXE}"
   nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe"
   Pop $0
 
 SectionEnd
 
+; Abort handlers
+;-------------------
+Function muiOnUserAbort
+  !insertmacro BenchPing "install" "cancel"
+FunctionEnd
+
+Function un.muiOnUserAbortUninstall
+  !insertmacro BenchPing "uninstall" "cancel"
+FunctionEnd
+
+; Install/Uninstall success handlers
+;-------------------
+
+Function .onInstSuccess
+  ;save the uuid
+  FileOpen $4 "$INSTDIR\uuid.txt" w
+  FileWrite $4 $INSTALL_GUID
+  FileClose $4
+
+  Call RunApplication
+  !insertmacro BenchPing "install" "success"
+FunctionEnd
+
+Function un.onUninstSuccess
+  !insertmacro BenchPing "uninstall" "success"
+FunctionEnd
+
 Function .onInit
-  ; WinVista SP2 is minimum requirement
-  ${IfNot} ${AtLeastWinVista}
-  ${OrIf} ${IsWinVista}
-  ${AndIfNot} ${AtLeastServicePack} 2
-    MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Windows Vista SP2 or above required.$\nInstall Service Pack 2 for Windows Vista and run setup again."
-    Quit
+  ; Initialize bench ping system variables (installer)
+  !insertmacro initBenchPing
+
+  !insertmacro BenchPing "install" "start"
+
+  ; Elevate with the UAC plugin. Code below derived from:
+  ; http://nsis.sourceforge.net/UAC_plug-in
+  ; The switch below is necessary to handle elevation failures
+  ; and secondary process termination on successes (and failures)
+  uac_tryagain:
+  !insertmacro UAC_RunElevated
+  ${Switch} $0
+  ${Case} 0
+  ${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
+  ${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
+  ${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+  MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "Installing ${APP_NAME} requires admin privileges, please try again" /SD IDNO IDYES uac_tryagain IDNO 0
   ${EndIf}
+  ;fall-through and die
+  ${Case} 1223
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Installing ${APP_NAME} requires admin privileges, aborting!"
+    !insertmacro BenchPing "install" "error_elevation_noadmin"
+  Quit
+  ${Case} 1062
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
+    !insertmacro BenchPing "install" "error_elevation_nologon"
+  Quit
+  ${Default}
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+    !insertmacro BenchPing "install" "error_elevation_abort"
+  Quit
+  ${EndSwitch}
+
   ; Win7 SP1 is minimum requirement
-  ${If} ${IsWin7}
+  ; Note that BitTorrent does not require SP1 so if this installer chain installs
+  ; BitTorrent then we will lose those users
+  ${IfNot} ${AtLeastWin7}
   ${AndIfNot} ${AtLeastServicePack} 1
+    !insertmacro BenchPing "install" "notAtLeastWin7SP1"
     MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Windows 7 SP1 or above required.$\nInstall Service Pack 1 for Windows 7 and run setup again."
     Quit
   ${EndIf}
 
   Var /GLOBAL HotFixID
-  ${If} ${IsWinVista}
-    StrCpy $HotFixID "971644" ; Platform Update for Windows Vista SP2
-  ${ElseIf} ${IsWin7}
+  ${If} ${IsWin7}
     StrCpy $HotFixID "2670838" ; Platform Update for Windows 7 SP1
+  ${ElseIf} ${IsWin8}
+    StrCpy $HotFixID "2999226" ; Platform Update for Windows 8
   ${Else}
     StrCpy $HotFixID ""
   ${Endif}
@@ -350,4 +463,11 @@ Function .onInit
     SetOutPath "$INSTDIR"
   ${EndIf}
   StrCpy $CleanDestDir "-1"
+FunctionEnd
+
+Function un.onInit
+  ; Initialize bench ping system variables (installer)
+  !insertmacro initBenchPing
+
+  !insertmacro BenchPing "uninstall" "start"
 FunctionEnd

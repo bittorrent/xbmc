@@ -13,7 +13,6 @@
   <addon>metadata.artists.universal</addon>
   <addon>metadata.common.allmusic.com</addon>
   <addon>metadata.common.fanart.tv</addon>
-  <addon>metadata.common.htbackdrops.com</addon>
   <addon>metadata.common.imdb.com</addon>
   <addon>metadata.common.musicbrainz.org</addon>
   <addon>metadata.common.theaudiodb.com</addon>
@@ -31,10 +30,7 @@
   <addon>script.module.pil</addon>
   <addon>service.bt.autosources</addon>
   <addon>service.bt.play</addon>
-  <addon>service.libraryautoupdate</addon>
-  <addon>service.xbmc.versioncheck</addon>
-  <addon>skin.estuary</addon>
-  <addon>skin.estouchy</addon>
+  <addon>service.bt.libraryautoupdate</addon>
   <addon>skin.bt.play</addon>
   <addon>webinterface.default</addon>
   <addon>xbmc.addon</addon>
