@@ -369,6 +369,11 @@ FunctionEnd
 ;-------------------
 
 Function .onInstSuccess
+  ;save the uuid
+  FileOpen $4 "$INSTDIR\uuid.txt" w
+  FileWrite $4 $INSTALL_GUID
+  FileClose $4
+
   Call RunApplication
   !insertmacro BenchPing "install" "success"
 FunctionEnd

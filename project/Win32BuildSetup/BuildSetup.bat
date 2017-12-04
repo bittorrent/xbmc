@@ -166,6 +166,7 @@ set WORKSPACE=%CD%\..\..\kodi-build
   copy %base_dir%\copying.txt BUILD_WIN32\application > NUL
   copy %base_dir%\privacy-policy.txt BUILD_WIN32\application > NUL
   copy %base_dir%\known_issues.txt BUILD_WIN32\application > NUL
+  copy %base_dir%\version.txt BUILD_WIN32\application > NUL
   xcopy dependencies\*.* BUILD_WIN32\application /Q /I /Y /EXCLUDE:exclude.txt  > NUL
 
   REM Prerequisite apps needed
