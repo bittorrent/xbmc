@@ -43,10 +43,10 @@ RequestExecutionLevel user
   OutFile "${APP_NAME}Setup-${app_revision}-${app_branch}-x86.exe"
 
   ;Default installation folder
-  InstallDir "$PROGRAMFILES\${APP_NAME}"
+  InstallDir "$PROGRAMFILES\${COMPANY_NAME}\${APP_NAME}"
 
   ;Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\${APP_NAME}" ""
+  InstallDirRegKey HKCU "Software\${COMPANY_NAME}\${APP_NAME}" ""
 
   InstProgressFlags smooth
 
@@ -135,7 +135,7 @@ FunctionEnd
 
 Function HandleOldPlayInstallation
   Var /GLOBAL INSTDIR_PLAY
-  ReadRegStr $INSTDIR_PLAY HKCU "Software\${APP_NAME}" ""
+  ReadRegStr $INSTDIR_PLAY HKCU "Software\${COMPANY_NAME}\${APP_NAME}" ""
 
   ;if former Play installation was detected in a different directory then the destination dir
   ;ask for uninstallation
@@ -230,7 +230,7 @@ Section "${APP_NAME}" SecAPP
   File /r "${app_root}\application\userdata\*.*"
 
   ;Store installation folder
-  WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
+  WriteRegStr HKCU "Software\${COMPANY_NAME}\${APP_NAME}" "" $INSTDIR
 
   ;Create uninstaller
   SetOutPath "$INSTDIR"
@@ -339,14 +339,17 @@ Section "Uninstall"
     RMDir /r "$APPDATA\${APP_NAME}\"
     RMDir /r "$INSTDIR\portable_data\"
   ${EndIf}
+
+  ;Remove the installation dir for Play and the parent dir if needed
   RMDir "$INSTDIR"
+  RMDir "$PROGRAMFILES\${COMPANY_NAME}"
 
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
   Delete "$SMSTARTUP\${APP_NAME}.lnk"
 
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
-  DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
+  DeleteRegKey /ifempty HKCU "Software\${COMPANY_NAME}\${APP_NAME}"
 
   ;remove firewall exceptions for app and script.bt.transcode addon ffmpeg
   nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${START_EXE}"
