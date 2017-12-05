@@ -43,10 +43,10 @@ RequestExecutionLevel user
   OutFile "${APP_NAME}Setup-${app_revision}-${app_branch}-x86.exe"
 
   ;Default installation folder
-  InstallDir "$PROGRAMFILES\${APP_NAME}"
+  InstallDir "$PROGRAMFILES\${COMPANY_NAME}\${APP_NAME}"
 
   ;Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\${APP_NAME}" ""
+  InstallDirRegKey HKCU "Software\${COMPANY_NAME}\${APP_NAME}" ""
 
   InstProgressFlags smooth
 
@@ -129,37 +129,37 @@ Function RunApplication
 FunctionEnd
 
 Function CallbackDirLeave
-  ;deinstall kodi if it is already there in destination folder
-  Call HandleKodiInDestDir
+  ;deinstall Play if it is already there in destination folder
+  Call HandlePlayInDestDir
 FunctionEnd
 
-Function HandleOldKodiInstallation
-  Var /GLOBAL INSTDIR_KODI
-  ReadRegStr $INSTDIR_KODI HKCU "Software\${APP_NAME}" ""
+Function HandleOldPlayInstallation
+  Var /GLOBAL INSTDIR_PLAY
+  ReadRegStr $INSTDIR_PLAY HKCU "Software\${COMPANY_NAME}\${APP_NAME}" ""
 
-  ;if former Kodi installation was detected in a different directory then the destination dir
+  ;if former Play installation was detected in a different directory then the destination dir
   ;ask for uninstallation
   ;only ask about the other installation if user didn't already
   ;decide to not overwrite the installation in his originally selected destination dir
   ${IfNot}    $CleanDestDir == "0"
-  ${AndIfNot} $INSTDIR_KODI == ""
-  ${AndIfNot} $INSTDIR_KODI == $INSTDIR
+  ${AndIfNot} $INSTDIR_PLAY == ""
+  ${AndIfNot} $INSTDIR_PLAY == $INSTDIR
     MessageBox MB_YESNO|MB_ICONQUESTION  "A previous ${APP_NAME} installation in a different folder was detected. Would you like to uninstall it?$\nYour current settings and library data will be kept intact." IDYES true IDNO false
     true:
-      DetailPrint "Uninstalling $INSTDIR_KODI"
+      DetailPrint "Uninstalling $INSTDIR_PLAY"
       SetDetailsPrint none
-      ExecWait '"$INSTDIR_KODI\uninstall.exe" /S _?=$INSTDIR_KODI'
+      ExecWait '"$INSTDIR_PLAY\uninstall.exe" /S _?=$INSTDIR_PLAY'
       SetDetailsPrint both
       ;this also removes the uninstall.exe which doesn't remove it self...
-      Delete "$INSTDIR_KODI\uninstall.exe"
+      Delete "$INSTDIR_PLAY\uninstall.exe"
       ;if the directory is now empty we can safely remove it (rmdir won't remove non-empty dirs!)
-      RmDir "$INSTDIR_KODI"
+      RmDir "$INSTDIR_PLAY"
     false:
   ${EndIf}
 FunctionEnd
 
-Function HandleKodiInDestDir
-  ;if former Kodi installation was detected in the destination directory - uninstall it first
+Function HandlePlayInDestDir
+  ;if former Play installation was detected in the destination directory - uninstall it first
   ${IfNot} $INSTDIR == ""
   ${AndIf} ${FileExists} "$INSTDIR\uninstall.exe"
     MessageBox MB_YESNO|MB_ICONQUESTION  "A previous installation was detected in the selected destination folder. Do you really want to overwrite it?$\nYour settings and library data will be kept intact." IDYES true IDNO false
@@ -173,7 +173,7 @@ Function HandleKodiInDestDir
   ${EndIf}
 FunctionEnd
 
-Function DeinstallKodiInDestDir
+Function DeinstallPlayInDestDir
   ${If} $CleanDestDir == "1"
     DetailPrint "Uninstalling former ${APP_NAME} Installation in $INSTDIR"
     SetDetailsPrint none
@@ -213,8 +213,8 @@ Section "${APP_NAME}" SecAPP
 
   SectionIn RO
 
-  ;deinstall kodi in destination dir if $CleanDestDir == "1" - meaning user has confirmed it
-  Call DeinstallKodiInDestDir
+  ;deinstall Play in destination dir if $CleanDestDir == "1" - meaning user has confirmed it
+  Call DeinstallPlayInDestDir
 
   ;Start copying files
   SetOutPath "$INSTDIR"
@@ -230,7 +230,7 @@ Section "${APP_NAME}" SecAPP
   File /r "${app_root}\application\userdata\*.*"
 
   ;Store installation folder
-  WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
+  WriteRegStr HKCU "Software\${COMPANY_NAME}\${APP_NAME}" "" $INSTDIR
 
   ;Create uninstaller
   SetOutPath "$INSTDIR"
@@ -339,14 +339,17 @@ Section "Uninstall"
     RMDir /r "$APPDATA\${APP_NAME}\"
     RMDir /r "$INSTDIR\portable_data\"
   ${EndIf}
+
+  ;Remove the installation dir for Play and the parent dir if needed
   RMDir "$INSTDIR"
+  RMDir "$PROGRAMFILES\${COMPANY_NAME}"
 
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
   Delete "$SMSTARTUP\${APP_NAME}.lnk"
 
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
-  DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
+  DeleteRegKey /ifempty HKCU "Software\${COMPANY_NAME}\${APP_NAME}"
 
   ;remove firewall exceptions for app and script.bt.transcode addon ffmpeg
   nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${START_EXE}"
@@ -440,7 +443,7 @@ Function .onInit
     Pop $1 ; command output
     ${If} $0 != 0
     ${OrIf} $1 == ""
-      MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Unable to run the Windows program wmic.exe to verify that Windows Update KB$HotFixID is installed.$\nWmic is not installed correctly.$\nPlease fix this issue and try again to install Kodi."
+      MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Unable to run the Windows program wmic.exe to verify that Windows Update KB$HotFixID is installed.$\nWmic is not installed correctly.$\nPlease fix this issue and try again to install Play."
       Quit
     ${EndIf}
     nsExec::ExecToStack 'cmd /Q /C "%SYSTEMROOT%\System32\findstr.exe /?"'
@@ -448,7 +451,7 @@ Function .onInit
     Pop $1 ; command output
     ${If} $0 != 0
     ${OrIf} $1 == ""
-      MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Unable to run the Windows program findstr.exe to verify that Windows Update KB$HotFixID is installed.$\nFindstr is not installed correctly.$\nPlease fix this issue and try again to install Kodi."
+      MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "Unable to run the Windows program findstr.exe to verify that Windows Update KB$HotFixID is installed.$\nFindstr is not installed correctly.$\nPlease fix this issue and try again to install Play."
       Quit
     ${EndIf}
     nsExec::ExecToStack 'cmd /Q /C "%SYSTEMROOT%\System32\wbem\wmic.exe qfe get hotfixid | %SYSTEMROOT%\System32\findstr.exe "^KB$HotFixID[^0-9]""'
