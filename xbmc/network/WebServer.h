@@ -49,6 +49,8 @@ public:
   void RegisterRequestHandler(IHTTPRequestHandler *handler);
   void UnregisterRequestHandler(IHTTPRequestHandler *handler);
 
+  short getPort();
+
 protected:
   typedef struct ConnectionHandler
   {
