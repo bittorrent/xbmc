@@ -1,9 +1,10 @@
 ;Application for Windows install script
 
-# Requirements
+# Dependency Requirements
 # NSIS 3.0: http://nsis.sourceforge.net/Download
 # Inetc: http://nsis.sourceforge.net/Inetc_plug-in
 # nsisFirewall 1.2: http://wiz0u.free.fr/prog/nsisFirewall/
+# UAC: http://nsis.sourceforge.net/UAC_plug-in
 
 # Required compile time defines
 # COMPANY_NAME
