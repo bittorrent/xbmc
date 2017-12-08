@@ -350,6 +350,14 @@ lib/cpluff/stamp-h1
 /tools/depends/target/Toolchain_binaddons.cmake
 /tools/depends/target/config-binaddons.site
 /tools/depends/target/binary-addons/native
+tools/depends/target/bzip2/_auto-target/
+tools/depends/target/expat/_auto-target/
+tools/depends/target/gettext/_auto-target/
+tools/depends/target/libgpg-error/_auto-target/
+tools/depends/target/liblzo2/_auto-target/
+tools/depends/target/libzip/_auto-target/
+tools/depends/target/pcre/_auto-target/
+tools/depends/target/sqlite3/_auto-target/
 
 # /tools/EventClients/
 /tools/EventClients/*.pyc
