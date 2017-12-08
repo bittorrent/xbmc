@@ -537,6 +537,7 @@ install-datas: install-scripts
 	@install -m 0644 docs/README.linux LICENSE.GPL copying.txt version.txt $(DESTDIR)$(docdir)
 	@install -d $(DESTDIR)/$(datarootdir)/@APP_NAME_LC@
 	@install -m 0644 privacy-policy.txt $(DESTDIR)$(datarootdir)/@APP_NAME_LC@
+	@install -m 0644 version.txt $(DESTDIR)$(datarootdir)/@APP_NAME_LC@
 	@echo "Done!"
 	@echo "Copying system files to $(DESTDIR)$(datarootdir)/@APP_NAME_LC@"
 	@install -d $(DESTDIR)$(datarootdir)/@APP_NAME_LC@
