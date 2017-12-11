@@ -3,7 +3,7 @@ SET BUILD_DEPS_PATH=%WORKSPACE%\project\BuildDependencies
 SET WGET=%BUILD_DEPS_PATH%\bin\wget
 SET ZIP=%BUILD_DEPS_PATH%\..\Win32BuildSetup\tools\7z\7za
 
-git submodule init addons\*bt*
+git submodule init --recursive addons\*bt*
 git submodule update --recursive addons\*bt*
 
 SET BT_TRANSCODE_FFMPEG_PATH=%WORKSPACE%\addons\script.bt.transcode\exec
