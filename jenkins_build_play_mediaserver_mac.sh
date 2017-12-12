@@ -3,12 +3,12 @@
 git submodule update --init --recursive addons/*bt*
 
 # Build Dependencies
-#cd tools/depends
-#./bootstrap
-#./configure --host=x86_64-apple-darwin
+cd tools/depends
+./bootstrap
+./configure --host=x86_64-apple-darwin
 #make
 #make -C target/binary-addons
-#cd ../..
+cd ../..
 
 FFMPEG="/Users/Shared/xbmc-depends/ffmpeg"
 if [ ! -f $FFMPEG ]; then
