@@ -3,8 +3,7 @@ SET BUILD_DEPS_PATH=%WORKSPACE%\project\BuildDependencies
 SET WGET=%BUILD_DEPS_PATH%\bin\wget
 SET ZIP=%BUILD_DEPS_PATH%\..\Win32BuildSetup\tools\7z\7za
 
-git submodule init --recursive addons\*bt*
-git submodule update --recursive addons\*bt*
+git submodule update --init --recursive addons\*bt*
 
 SET BT_TRANSCODE_FFMPEG_PATH=%WORKSPACE%\addons\script.bt.transcode\exec
 
@@ -25,7 +24,7 @@ SET FFMPEG_BINARY=%FFMPEG_STATIC_DIR%\%FFMPEG_BINARY_FILENAME%
 del %BT_TRANSCODE_FFMPEG_PATH%\%FFMPEG_BINARY_FILENAME%
 copy %FFMPEG_BINARY% %BT_TRANSCODE_FFMPEG_PATH%\%FFMPEG_BINARY_FILENAME%
 cd ..\
-rmdir /S /Q %FFMPEG_STATIC_DIR%
+rem rmdir /S /Q %FFMPEG_STATIC_DIR%
 
 cd ..\Win32BuildSetup
 call BuildSetup.bat
