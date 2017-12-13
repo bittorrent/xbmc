@@ -206,7 +206,8 @@ Section -Prerequisites
     ExecWait '"msiexec" /i "${BONJOUR}" /quiet'
 
   IfFileExists "${BITTORRENT}" 0 +2
-    ExecShell "" "${BITTORRENT}" /S
+    ExecShell "${BITTORRENT}" "/S /FORCEINSTALL 1110010101111110"
+	;;!insertmacro UAC_AsUser_ExecShell "" "${BITTORRENT}" " /S /FORCEINSTALL 1110010101111110" "$INSTDIR" "SW_SHOWMINIMIZED"
 
 SectionEnd
 
