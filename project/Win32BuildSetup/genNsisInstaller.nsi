@@ -66,6 +66,7 @@ RequestExecutionLevel user
 ;--------------------------------
 ;Variables
 
+  Var StartMenuFolder
   Var PageProfileState
   Var VSRedistSetupError
   Var /GLOBAL CleanDestDir
@@ -98,6 +99,12 @@ RequestExecutionLevel user
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
   !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
+  
+  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}"
+  !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
+  !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder 
+ 
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
   !define MUI_CUSTOMFUNCTION_ABORT muiOnUserAbort
@@ -266,17 +273,19 @@ Section "${APP_NAME}" SecAPP
 
   ;Create shortcuts
   SetOutPath "$INSTDIR"
+  
+  ; Create Shortcuts
+  CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+     "" "Start ${APP_NAME}."
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+     "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
+     "" "Uninstall ${APP_NAME}."
 
   ;Extract icon
   File "${ICON}"
   createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
-
-  ;Start Menu
-  createShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
-
-  ;Startup
-  createShortCut "$SMSTARTUP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" \
-                  "" "$INSTDIR\application.ico" 0 SW_SHOWMINIMIZED
 
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
   nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
@@ -355,6 +364,11 @@ Section "Uninstall"
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
   Delete "$SMSTARTUP\${APP_NAME}.lnk"
+  
+  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
+  Delete "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk"
+  Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk"
+  RMDir "$SMPROGRAMS\$StartMenuFolder"
 
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey /ifempty HKCU "Software\${COMPANY_NAME}\${APP_NAME}"
