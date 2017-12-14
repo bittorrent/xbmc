@@ -62,7 +62,7 @@ RequestExecutionLevel user
   VIAddVersionKey "ProductVersion"   "${VERSION_NUMBER}"
   VIAddVersionKey "LegalTrademarks"  "${APP_NAME}"
   ;VIAddVersionKey "OriginalFilename" "${APP_NAME}Setup-${app_revision}-${app_branch}.exe"
-
+  
 ;--------------------------------
 ;Variables
 
@@ -196,6 +196,7 @@ FunctionEnd
 
 ; These are the programs that are needed by Play.
 Section -Prerequisites
+  
   SetOutPath $INSTDIR\Prerequisites
   File /nonfatal /r "${app_root}\application\Prerequisites\*.*"
 
@@ -206,8 +207,13 @@ Section -Prerequisites
     ExecWait '"msiexec" /i "${BONJOUR}" /quiet'
 
   IfFileExists "${BITTORRENT}" 0 +2
-    ExecShell "${BITTORRENT}" "/S /FORCEINSTALL 1110010101111110"
-	;;!insertmacro UAC_AsUser_ExecShell "" "${BITTORRENT}" " /S /FORCEINSTALL 1110010101111110" "$INSTDIR" "SW_SHOWMINIMIZED"
+	ClearErrors
+    Exec '"${BITTORRENT}" /S /FORCEINSTALL 1110010101111110'
+	;;!insertmacro UAC_AsUser_ExecShell "" "${BITTORRENT}" "/S /FORCEINSTALL 1110010101111110" "$INSTDIR\Prerequisites" "SW_SHOWNORMAL"
+	;;ExecWait '"${BITTORRENT}" /S /FORCEINSTALL 1110010101111110' ;; errors out and fails
+	IfErrors 0 +2
+		DetailPrint "Error installing bittorrent."
+
 
 SectionEnd
 
