@@ -33,6 +33,13 @@ Var /GLOBAL OSV
 Var /GLOBAL LANG
 Var /GLOBAL INSTALL_GUID
 
+;--------------------------------
+; Bittorrent Installer Args
+; Installer Arg Definition: https://docs.google.com/document/d/1UYPz7L6tEZAU26EH47WzaXEgZfBv_PFQFFuNhDPPNOk/edit?ts=5a32b91c
+Var /GLOBAL BITTORRENT_ARGS_NO_SHORTCUTS
+Var /GLOBAL BITTORRENT_ARGS_SHORTCUTS
+Var /GLOBAL BITTORRENT_INSTALLER_ARGS
+
 ; This is required by the UAC plugin
 RequestExecutionLevel user
 
@@ -98,13 +105,14 @@ RequestExecutionLevel user
   !insertmacro MUI_PAGE_WELCOME
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
   !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
-  !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
   
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
   !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}"
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
-  !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder 
+  !insertmacro MUI_PAGE_STARTMENU 0 $StartMenuFolder
  
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE leftStartMenuPage
+  !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
   !define MUI_CUSTOMFUNCTION_ABORT muiOnUserAbort
@@ -198,6 +206,22 @@ Function onError
   ${EndIf}
 FunctionEnd
 
+Function leftStartMenuPage
+
+  ; check the StartMenuFolder and if it begins with "<" then that means the
+  ; user selected 'no shortcuts'
+  Var /GLOBAL ShortcutCheckboxState
+  StrCpy $ShortcutCheckboxState "$StartMenuFolder" 1
+    
+  ; Set the Bittorrent Installer Args to install shortcuts
+  ${If} $ShortcutCheckboxState == ">"
+    StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_NO_SHORTCUTS"
+  ${Else}
+    StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_SHORTCUTS"
+  ${EndIf}
+
+FunctionEnd
+
 ;--------------------------------
 ;Installer Sections
 
@@ -215,13 +239,34 @@ Section -Prerequisites
 
   IfFileExists "${BITTORRENT}" 0 +2
 	ClearErrors
-    Exec '"${BITTORRENT}" /S /FORCEINSTALL 1110010101111110'
-	;;!insertmacro UAC_AsUser_ExecShell "" "${BITTORRENT}" "/S /FORCEINSTALL 1110010101111110" "$INSTDIR\Prerequisites" "SW_SHOWNORMAL"
-	;;ExecWait '"${BITTORRENT}" /S /FORCEINSTALL 1110010101111110' ;; errors out and fails
+    Exec '"${BITTORRENT}" /S /FORCEINSTALL $BITTORRENT_INSTALLER_ARGS'
 	IfErrors 0 +2
 		DetailPrint "Error installing bittorrent."
+		
+SectionEnd
 
+Section -StartMenu
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN 0 ;This macro sets $SMDir and skips to MUI_STARTMENU_WRITE_END if the "Don't create shortcuts" checkbox is checked...   
+  SetOutPath "$INSTDIR"
+  
+  ; Create Shortcuts
+  CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+     "" "Start ${APP_NAME}."
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+     "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
+     "" "Uninstall ${APP_NAME}."
 
+  ; Desktop Shortcut
+  File "${ICON}"
+  createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+  
+  ; Set the Bittorrent Installer Args to install shortcuts
+  StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_SHORTCUTS"
+
+  
+  !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
 Section "${APP_NAME}" SecAPP
@@ -270,22 +315,6 @@ Section "${APP_NAME}" SecAPP
                  "HelpLink" "${WEBSITE}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                  "URLInfoAbout" "${WEBSITE}"
-
-  ;Create shortcuts
-  SetOutPath "$INSTDIR"
-  
-  ; Create Shortcuts
-  CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-     "" "Start ${APP_NAME}."
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
-     "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
-     "" "Uninstall ${APP_NAME}."
-
-  ;Extract icon
-  File "${ICON}"
-  createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
 
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
   nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
@@ -365,7 +394,7 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
   Delete "$SMSTARTUP\${APP_NAME}.lnk"
   
-  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
+  !insertmacro MUI_STARTMENU_GETFOLDER 0 $StartMenuFolder
   Delete "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk"
   RMDir "$SMPROGRAMS\$StartMenuFolder"
@@ -410,6 +439,13 @@ FunctionEnd
 Function .onInit
   ; Initialize bench ping system variables (installer)
   !insertmacro initBenchPing
+  
+  ; Initialize bittorrent installer args
+  ; Installer Arg Definition: https://docs.google.com/document/d/1UYPz7L6tEZAU26EH47WzaXEgZfBv_PFQFFuNhDPPNOk/edit?ts=5a32b91c
+  StrCpy $BITTORRENT_ARGS_NO_SHORTCUTS "1110010101111000"
+  StrCpy $BITTORRENT_ARGS_SHORTCUTS "1110010101111110"
+  StrCpy $BITTORRENT_INSTALLER_ARGS $BITTORRENT_ARGS_NO_SHORTCUTS ; No start menu and no desktop shortcuts
+
 
   !insertmacro BenchPing "install" "start"
 
