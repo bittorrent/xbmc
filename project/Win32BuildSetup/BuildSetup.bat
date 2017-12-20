@@ -53,7 +53,7 @@ SET useshell=rxvt
 SET BRANCH=na
 SET INSTALLER_ONLY=false
 SET EXE_AND_INSTALLER=false
-FOR %%b in (%1, %2, %3, %4, %5, %6) DO (
+FOR %%b in (%1, %2, %3, %4, %5, %6, %7, %8) DO (
   IF %%b==clean SET buildmode=clean
   IF %%b==noclean SET buildmode=noclean
   IF %%b==noprompt SET promptlevel=noprompt
