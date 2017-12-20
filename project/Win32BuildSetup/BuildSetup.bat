@@ -26,13 +26,14 @@ IF NOT [%TAG%] == [] (
 )
 
 rem ----Usage----
-rem BuildSetup [clean|noclean] [noprompt] [nomingwlibs] [nobinaryaddons] [sh]
+rem BuildSetup [clean|noclean] [noprompt] [nomingwlibs] [nobinaryaddons] [sh] [installeronly]
 rem clean to force a full rebuild
 rem noclean to force a build without clean
 rem noprompt to avoid all prompts
 rem nomingwlibs to skip building all libs built with mingw
 rem nobinaryaddons to skip building binary addons
 rem sh to use sh shell instead rxvt
+rem installeronly only use if the exe has already been built and you just need the installer built too
 CLS
 COLOR 1B
 TITLE %APP_NAME% for Windows Build Script
@@ -50,21 +51,33 @@ SET buildbinaryaddons=true
 SET exitcode=0
 SET useshell=rxvt
 SET BRANCH=na
-FOR %%b in (%1, %2, %3, %4, %5, %6) DO (
+SET INSTALLER_ONLY=false
+SET EXE_AND_INSTALLER=false
+FOR %%b in (%1, %2, %3, %4, %5, %6, %7, %8) DO (
   IF %%b==clean SET buildmode=clean
   IF %%b==noclean SET buildmode=noclean
   IF %%b==noprompt SET promptlevel=noprompt
   IF %%b==nomingwlibs SET buildmingwlibs=false
   IF %%b==nobinaryaddons SET buildbinaryaddons=false
   IF %%b==sh SET useshell=sh
+  IF %%b==installeronly SET INSTALLER_ONLY=true
+  IF %%b==buildexeandinstaller SET EXE_AND_INSTALLER=true
 )
-
 SET buildconfig=Release
 set WORKSPACE=%CD%\..\..\kodi-build
 
 
   :: sets the BRANCH env var
   call getbranch.bat
+  IF %INSTALLER_ONLY%==true (
+	ECHO "Running Installer Build Only"
+	GOTO NSIS_EXE
+  )
+  
+  IF %EXE_AND_INSTALLER%==true (
+	ECHO "Running EXE Build and Installer Build"
+	GOTO MAKE_BUILD_EXE
+  )
 
   rem  CONFIG END
   rem -------------------------------------------------------------
