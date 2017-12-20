@@ -104,7 +104,7 @@ RequestExecutionLevel user
 
   !insertmacro MUI_PAGE_WELCOME
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
-  !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
+  !insertmacro MUI_PAGE_LICENSE "..\..\BitTorrent-License.txt"
   
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
   !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}"
