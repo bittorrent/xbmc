@@ -128,7 +128,7 @@ install(FILES ${CORE_SOURCE_DIR}/tools/Linux/packaging/media/icon256x256.png
 
 # Install docs
 install(FILES ${CORE_SOURCE_DIR}/copying.txt
-              ${CORE_SOURCE_DIR}/LICENSE.GPL
+              ${CORE_SOURCE_DIR}/BitTorrent-License.txt
               ${CORE_SOURCE_DIR}/version.txt
               ${CORE_SOURCE_DIR}/docs/README.linux
         DESTINATION ${docdir}

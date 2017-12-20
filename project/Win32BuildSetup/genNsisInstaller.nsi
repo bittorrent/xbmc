@@ -96,7 +96,7 @@ RequestExecutionLevel user
 
   !insertmacro MUI_PAGE_WELCOME
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
-  !insertmacro MUI_PAGE_LICENSE "..\..\LICENSE.GPL"
+  !insertmacro MUI_PAGE_LICENSE "..\..\BitTorrent-License.txt"
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
