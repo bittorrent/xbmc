@@ -1,3 +1,10 @@
+# Play Support Patterns
+BitTorrent.exe
+Bonjour64.msi
+project/BuildDependencies/Win32/
+project/BuildDependencies/ffmpeg-static/
+system/lcms2.dll
+
 # global patterns
 testMain
 
