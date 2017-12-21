@@ -92,42 +92,32 @@ pipeline {
 						bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
 					}
 					stage ('Pre-sign') {
-						if (env.SIGN_BUILD) {
+//						if (env.SIGN_BUILD) {
 							dir ('project\\Win32BuildSetup') {
 						  		bat 'python %WORKSPACE%\\jenkins-pre-sign.py %JENKINS_CODE_SIGNING_KEY% .\\BUILD_WIN32'
 							}
-						}
+//						}
 					}
 					stage ('Assemble pre-signed exe') {
-						if (env.SIGN_BUILD) {
+//						if (env.SIGN_BUILD) {
 							dir ('project\\Win32BuildSetup') {
 						  		bat 'call .\\BuildSetup.bat noclean nomingwlibs nsis'
 							}
-						}
-					}
-					stage ('Faked pre-signed exe') {
-						if (env.SIGN_BUILD) {
-							withAWS(region: MEDIA_SERVER_S3_REGION, credentials: MEDIA_SERVER_S3_CREDS_VIA_JEKINS) {
-								s3Download(file: "test", bucket: MEDIA_SERVER_S3_BUCKET, path: "test_presigning/63/play.exe", force:true)
-							}
-							dir ('test\\test_presigning\\63') {
-								bat 'dir'
-							}
-						}
+//						}
 					}
 					stage ('Upload pre-signed exe') {
-						if (env.SIGN_BUILD) {
+//						if (env.SIGN_BUILD) {
 							dir ('test\\test_presigning\\63') {
 								withAWS(region: MEDIA_SERVER_S3_REGION, credentials: MEDIA_SERVER_S3_CREDS_VIA_JEKINS) {
 									s3Upload(file: ".\\play.exe", bucket: BT_JENKINS_ARTIFACT_BUCKET, path: "play/9999/play.exe")
 								}
 							}
-						}
+//						}
 					}
 					stage ('Notary') {
-						if (env.SIGN_BUILD) {
+//						if (env.SIGN_BUILD) {
 							bat "call wget '${env.MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}'"
-						}
+//						}
 					}
 //				}
 			}
