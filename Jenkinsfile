@@ -4,9 +4,6 @@ MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID = "JenkinsPreSignKey"
 MEDIA_SERVER_S3_CREDS_VIA_JENKINS = "bt-play-rw"
 
 BT_JENKINS_ARTIFACT_BUCKET = ''
-MEDIA_SERVER_S3_BUCKET = ''
-MEDIA_SERVER_S3_REGION = ''
-MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = ''
 WIN_BUNDLED_SOFTWARE_PATH = 'media_server/bundled_software/windows'
 WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER = 'BitTorrent.exe'
 WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER = 'Bonjour64.msi'
@@ -53,7 +50,7 @@ pipeline {
 			}
 			stage('Download Bundled Software') {
         steps {
-          withAWS(region: '${MEDIA_SERVER_S3_REGION}', credentials: '${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}') {
+          withAWS(region: '${MEDIA_SERVER_S3_REGION}', credentials: MEDIA_SERVER_S3_CREDS_VIA_JENKINS) {
   					s3Download(file: '${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}', bucket: '${MEDIA_SERVER_S3_BUCKET}', path: '${WIN_BUNDLED_SOFTWARE_PATH}'/'${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}', force:true)
   				}
           /*
