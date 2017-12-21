@@ -42,67 +42,47 @@ pipeline {
 
 	stages {
 			stage('Checkout Source') {
-				checkout scm
+        steps {
+          checkout scm
+        }
 			}
 			stage('Prep Git Submodules') {
-				bat "git submodule update --init --recursive addons\\*bt*"
+        steps {
+          bat "git submodule update --init --recursive addons\\*bt*"
+        }
 			}
 			stage('Download Bundled Software') {
-				withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
-					s3Download(file: ${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}", force:true)
-				}
-//						withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
-//							s3Download(file: ${WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER}", force:true)
-//						}
-//						withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
-//							s3Download(file: ${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}", force:true)
-//						}
-//						bat "Echo moving the ffmpeg static exe to the proper location for build."
-//						bat "del ${BT_TRANSCODE_FFMPEG_PATH}\\${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}"
-//						bat "move ${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC} ${BT_TRANSCODE_FFMPEG_PATH}\\${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}"
+        steps {
+          withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
+  					s3Download(file: ${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}", force:true)
+  				}
+  //						withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
+  //							s3Download(file: ${WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER}", force:true)
+  //						}
+  //						withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
+  //							s3Download(file: ${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}", force:true)
+  //						}
+  //						bat "Echo moving the ffmpeg static exe to the proper location for build."
+  //						bat "del ${BT_TRANSCODE_FFMPEG_PATH}\\${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}"
+  //						bat "move ${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC} ${BT_TRANSCODE_FFMPEG_PATH}\\${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}"
+        }
 			}
-			stage('Download XBMC DEPS') {
-				echo ""
-				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
+
+  		stage('Download XBMC DEPS') {
+        steps {
+          echo ""
+  				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
+        }
 			}
 			stage('Download Mingw Build Env') {
-				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
+        steps {
+          bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
+        }
 			}
 			stage('Build') {
-				bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+        steps {
+          bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+        }
 			}
-			stage ('Pre-sign') {
-//						if (env.SIGN_BUILD) {
-					dir ('project\\Win32BuildSetup') {
-				  		bat 'python %WORKSPACE%\\jenkins-pre-sign.py %JENKINS_CODE_SIGNING_KEY% .\\BUILD_WIN32'
-					}
-//						}
-			}
-			stage ('Assemble pre-signed exe') {
-//						if (env.SIGN_BUILD) {
-					dir ('project\\Win32BuildSetup') {
-				  		bat 'call .\\BuildSetup.bat noclean nomingwlibs nsis'
-					}
-//						}
-			}
-			stage ('Upload pre-signed exe') {
-//						if (env.SIGN_BUILD) {
-					dir ('test\\test_presigning\\63') {
-						withAWS(region: MEDIA_SERVER_S3_REGION, credentials: MEDIA_SERVER_S3_CREDS_VIA_JEKINS) {
-							s3Upload(file: ".\\play.exe", bucket: BT_JENKINS_ARTIFACT_BUCKET, path: "play/9999/play.exe")
-						}
-					}
-//						}
-			}
-			stage ('Notary') {
-//						if (env.SIGN_BUILD) {
-					bat "call wget '${env.MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}'"
-//						}
-			}
-//			post {
-//				always {
-//					archive "project/Win32BuildSetup/BUILD_WIN32/**"
-//				}
-//			}
 		}
 }
