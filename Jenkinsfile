@@ -30,7 +30,7 @@ pipeline {
 
 
     environment {
-        JENKINS_CODE_SIGNING_KEY = credentials("MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID")
+        JENKINS_CODE_SIGNING_KEY = credentials(${MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID})
     }
 
 	stages {
