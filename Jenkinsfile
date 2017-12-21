@@ -58,7 +58,7 @@ pipeline {
                     //label 'windows'
                     label 'Windows_Build_Slave'
 
-                    withCredentials([file(credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE')]) {
+                    withCredentials([file(credentialsId: "mediaserver_sensitive_build_strings", variable: 'SENSITIVE_BUILD_STRINGS_FILE')]) {
                         sensitive_strings = readProperties(SENSITIVE_BUILD_STRINGS_FILE)
 
                         env.MEDIA_SERVER_S3_BUCKET = sensitive_strings['MEDIA_SERVER_S3_BUCKET']
