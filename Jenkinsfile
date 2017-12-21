@@ -4,9 +4,9 @@ MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID = "JenkinsPreSignKey"
 MEDIA_SERVER_S3_CREDS_VIA_JENKINS = "bt-play-rw"
 
 BT_JENKINS_ARTIFACT_BUCKET = ''
-WIN_BUNDLED_SOFTWARE_PATH = 'media_server/bundled_software/windows'
-WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER = 'BitTorrent.exe'
-WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER = 'Bonjour64.msi'
+WIN_BUNDLED_SOFTWARE_PATH = ''
+WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER = 'media_server/bundled_software/windows/BitTorrent.exe'
+WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER = 'media_server/bundled_software/windows/Bonjour64.msi'
 WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC = 'ffmpeg.exe'
 BT_TRANSCODE_FFMPEG_PATH = 'addons\\script.bt.transcode\\exec'
 WIN_BUILD_DEPS_PATH = 'project\\BuildDependencies'
@@ -41,17 +41,13 @@ pipeline {
 			stage('Checkout Source') {
         steps {
           checkout scm
-        }
-			}
-			stage('Prep Git Submodules') {
-        steps {
           bat "git submodule update --init --recursive addons\\*bt*"
         }
 			}
 			stage('Download Bundled Software') {
         steps {
           withAWS(region: '${MEDIA_SERVER_S3_REGION}', credentials: MEDIA_SERVER_S3_CREDS_VIA_JENKINS) {
-  					s3Download(file: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, bucket: '${MEDIA_SERVER_S3_BUCKET}', path: WIN_BUNDLED_SOFTWARE_PATH/WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, force:true)
+  					s3Download(file: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, bucket: '${MEDIA_SERVER_S3_BUCKET}', path: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, force:true)
   				}
           /*
           withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
