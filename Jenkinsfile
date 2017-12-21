@@ -31,6 +31,9 @@ pipeline {
 
     environment {
         JENKINS_CODE_SIGNING_KEY = credentials("${MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID}")
+				MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
+				MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
+				MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
     }
 
 	stages {
@@ -54,14 +57,6 @@ pipeline {
 			agent {
                 node {
                     label 'Joes_PC'
-
-                        withCredentials([[$class: 'FileBinding', credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE']]) {
-                    // withCredentials( [file(credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE')]) {
-                        sensitive_strings = readProperties(SENSITIVE_BUILD_STRINGS_FILE)
-
-                        env.MEDIA_SERVER_S3_BUCKET = sensitive_strings['MEDIA_SERVER_S3_BUCKET']
-                        env.MEDIA_SERVER_S3_REGION = sensitive_strings['MEDIA_SERVER_S3_REGION']
-                        env.MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = sensitive_strings['MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL']
                     }
                 }
 			}
