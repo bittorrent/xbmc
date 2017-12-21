@@ -53,7 +53,6 @@ pipeline {
 		stage('Build on Windows') {
 			agent {
                 node {
-                    //label 'windows'
                     label 'Joes_PC'
 
                         withCredentials([[$class: 'FileBinding', credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE']]) {
