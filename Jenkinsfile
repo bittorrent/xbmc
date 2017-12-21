@@ -20,58 +20,37 @@ WIN_DOWNLOAD_BUILD_DEPS_SCRIPT = 'DownloadBuildDeps.bat'
 WIN_DOWNLOAD_MINGW_ENV_SCRIPT = 'DownloadMingwBuildEnv.bat'
 
 pipeline {
-	agent none
+	agent {
+		node {
+			label 'Joes_PC'
+		}
+	}
+
 	parameters {
 		//string(name: 'branch_to_build', defaultValue: 'origin/develop', description: 'The git branch to build.')
 		string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
 		booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
 	}
 
+	environment {
+		JENKINS_CODE_SIGNING_KEY = credentials("JenkinsPreSignKey")
+		MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
+		MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
+		MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
+		PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
+	}
+
 	stages {
-		stage('Determine Build Settings') {
-			agent any
-
-			steps {
-                script {
-                    if ((env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')) || ${params.perform_signing}) {
-                        echo "Due to branch name ${env.BRANCH_NAME} or param override: perform_signing = ${params.perform_signing} this build will be signed."
-                        env.SIGN_BUILD = true
-                    }
-                    else {
-                        echo "Due to branch name ${env.BRANCH_NAME} or param override: perform_signing = ${params.perform_signing} this build will NOT be signed."
-                        env.SIGN_BUILD = false
-                    }
-                }
+			stage('Checkout Source') {
+				checkout scm
 			}
-		}
-
-		stage('Build on Windows') {
-			agent {
-				node {
-					label 'Joes_PC'
+			stage('Prep Git Submodules') {
+				bat "git submodule update --init --recursive addons\\*bt*"
+			}
+			stage('Download Bundled Software') {
+				withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
+					s3Download(file: ${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}", force:true)
 				}
-			}
-
-			environment {
-				JENKINS_CODE_SIGNING_KEY = credentials("JenkinsPreSignKey")
-				MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
-				MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
-				MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
-      	PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
-    	}
-
-			steps {
-				script {
-					stage('Checkout Source') {
-						checkout scm
-					}
-					stage('Prep Git Submodules') {
-						bat "git submodule update --init --recursive addons\\*bt*"
-					}
-					stage('Download Bundled Software') {
-						withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
-							s3Download(file: ${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}", force:true)
-						}
 //						withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
 //							s3Download(file: ${WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER}, bucket: ${MEDIA_SERVER_S3_BUCKET}, path: "${WIN_BUNDLED_SOFTWARE_PATH}/${WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER}", force:true)
 //						}
@@ -81,52 +60,49 @@ pipeline {
 //						bat "Echo moving the ffmpeg static exe to the proper location for build."
 //						bat "del ${BT_TRANSCODE_FFMPEG_PATH}\\${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}"
 //						bat "move ${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC} ${BT_TRANSCODE_FFMPEG_PATH}\\${WIN_BUNDLED_SOFTWARE_FFMPEG_STATIC}"
-					}
-					stage('Download XBMC DEPS') {
-						echo ""
-						bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
-					}
-					stage('Download Mingw Build Env') {
-						bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
-					}
-					stage('Build') {
-						bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
-					}
-					stage ('Pre-sign') {
-//						if (env.SIGN_BUILD) {
-							dir ('project\\Win32BuildSetup') {
-						  		bat 'python %WORKSPACE%\\jenkins-pre-sign.py %JENKINS_CODE_SIGNING_KEY% .\\BUILD_WIN32'
-							}
-//						}
-					}
-					stage ('Assemble pre-signed exe') {
-//						if (env.SIGN_BUILD) {
-							dir ('project\\Win32BuildSetup') {
-						  		bat 'call .\\BuildSetup.bat noclean nomingwlibs nsis'
-							}
-//						}
-					}
-					stage ('Upload pre-signed exe') {
-//						if (env.SIGN_BUILD) {
-							dir ('test\\test_presigning\\63') {
-								withAWS(region: MEDIA_SERVER_S3_REGION, credentials: MEDIA_SERVER_S3_CREDS_VIA_JEKINS) {
-									s3Upload(file: ".\\play.exe", bucket: BT_JENKINS_ARTIFACT_BUCKET, path: "play/9999/play.exe")
-								}
-							}
-//						}
-					}
-					stage ('Notary') {
-//						if (env.SIGN_BUILD) {
-							bat "call wget '${env.MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}'"
-//						}
-					}
-				}
 			}
-			post {
-				always {
-					archive "project/Win32BuildSetup/BUILD_WIN32/**"
-				}
+			stage('Download XBMC DEPS') {
+				echo ""
+				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
 			}
+			stage('Download Mingw Build Env') {
+				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
+			}
+			stage('Build') {
+				bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+			}
+			stage ('Pre-sign') {
+//						if (env.SIGN_BUILD) {
+					dir ('project\\Win32BuildSetup') {
+				  		bat 'python %WORKSPACE%\\jenkins-pre-sign.py %JENKINS_CODE_SIGNING_KEY% .\\BUILD_WIN32'
+					}
+//						}
+			}
+			stage ('Assemble pre-signed exe') {
+//						if (env.SIGN_BUILD) {
+					dir ('project\\Win32BuildSetup') {
+				  		bat 'call .\\BuildSetup.bat noclean nomingwlibs nsis'
+					}
+//						}
+			}
+			stage ('Upload pre-signed exe') {
+//						if (env.SIGN_BUILD) {
+					dir ('test\\test_presigning\\63') {
+						withAWS(region: MEDIA_SERVER_S3_REGION, credentials: MEDIA_SERVER_S3_CREDS_VIA_JEKINS) {
+							s3Upload(file: ".\\play.exe", bucket: BT_JENKINS_ARTIFACT_BUCKET, path: "play/9999/play.exe")
+						}
+					}
+//						}
+			}
+			stage ('Notary') {
+//						if (env.SIGN_BUILD) {
+					bat "call wget '${env.MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}'"
+//						}
+			}
+//			post {
+//				always {
+//					archive "project/Win32BuildSetup/BUILD_WIN32/**"
+//				}
+//			}
 		}
-	}
 }
