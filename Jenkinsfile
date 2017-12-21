@@ -28,14 +28,6 @@ pipeline {
 		booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
 	}
 
-
-    environment {
-        JENKINS_CODE_SIGNING_KEY = credentials("${MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID}")
-				MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
-				MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
-				MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
-    }
-
 	stages {
 		stage('Determine Build Settings') {
 			agent any
@@ -59,9 +51,15 @@ pipeline {
 					label 'Joes_PC'
 				}
 			}
+
 			environment {
-            	PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
-        	}
+				JENKINS_CODE_SIGNING_KEY = credentials("${MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID}")
+				MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
+				MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
+				MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
+      	PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
+    	}
+
 			steps {
 				script {
 					stage('Checkout Source') {
