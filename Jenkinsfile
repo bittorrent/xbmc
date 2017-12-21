@@ -55,10 +55,9 @@ pipeline {
 		}
 		stage('Build on Windows') {
 			agent {
-                node {
-                    label 'Joes_PC'
-                    }
-                }
+				node {
+					label 'Joes_PC'
+				}
 			}
 			environment {
             	PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
