@@ -53,7 +53,7 @@ pipeline {
 			}
 			stage('Download Bundled Software') {
         steps {
-          withAWS(region: ${MEDIA_SERVER_S3_REGION}, credentials: ${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}) {
+          withAWS(region: '${MEDIA_SERVER_S3_REGION}', credentials: '${MEDIA_SERVER_S3_CREDS_VIA_JENKINS}') {
   					s3Download(file: '${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}', bucket: '${MEDIA_SERVER_S3_BUCKET}', path: '${WIN_BUNDLED_SOFTWARE_PATH}'/'${WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER}', force:true)
   				}
           /*
