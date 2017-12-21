@@ -56,7 +56,7 @@ pipeline {
                     label 'Joes_PC'
 
                         withCredentials([[$class: 'FileBinding', credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE']]) {
-                    //withCredentials( [file(credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE')]) {
+                    // withCredentials( [file(credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE')]) {
                         sensitive_strings = readProperties(SENSITIVE_BUILD_STRINGS_FILE)
 
                         env.MEDIA_SERVER_S3_BUCKET = sensitive_strings['MEDIA_SERVER_S3_BUCKET']
