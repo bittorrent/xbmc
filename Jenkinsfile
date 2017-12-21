@@ -27,8 +27,8 @@ pipeline {
 		string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
 		booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
 	}
-	
-    	
+
+
     environment {
         JENKINS_CODE_SIGNING_KEY = credentials("${MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID}")
     }
@@ -54,8 +54,8 @@ pipeline {
 			agent {
                 node {
                     //label 'windows'
-                    label 'Windows_Build_Slave'
-                    
+                    label 'Joes_PC'
+
                         withCredentials([[$class: 'FileBinding', credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE']]) {
                     //withCredentials( [file(credentialsId: "${MEDIA_SERVER_JENKINS_CREDS_SENSITIVE_BUILD_STRINGS_ID}", variable: 'SENSITIVE_BUILD_STRINGS_FILE')]) {
                         sensitive_strings = readProperties(SENSITIVE_BUILD_STRINGS_FILE)
@@ -147,5 +147,5 @@ pipeline {
 				}
 			}
 		}
-	}	
+	}
 }
