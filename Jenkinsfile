@@ -23,7 +23,7 @@ pipeline {
 		stage('Build on Windows') {
 			agent {
 				//label 'windows'
-				label 'Windows_Build_Slave'
+        label 'Joes_PC'
 			}
 			steps {
 				script {
@@ -57,6 +57,45 @@ pipeline {
 					stage('Build') {
 						bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
 					}
+
+          stage ('Pre-sign') {
+            //when {
+            //  expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+            //}
+            steps {
+              dir ('project\\Win32BuildSetup') {
+                bat 'python %WORKSPACE%\\jenkins-pre-sign.py %JENKINS_CODE_SIGNING_KEY% .\\BUILD_WIN32'
+              }
+            }
+          }
+
+          stage ('Assemble pre-signed exe') {
+            //when {
+            //    expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+            //}
+            steps {
+              dir ('project\\Win32BuildSetup') {
+                bat 'call .\\BuildSetup.bat noclean nomingwlibs installer_only'
+              }
+            }
+          }
+
+          stage ('Upload pre-signed exe') {
+            steps {
+              dir ('project\\Win32BuildSetup') {
+                withAWS(region: 'us-east-1', credentials: 'jenkins-play-main-org') {
+                  s3Upload(file: "Play*.exe", bucket: "bt-build-artifacts", path: "play/${BUILD_NUMBER}/Play.exe")
+                }
+              }
+            }
+          }
+
+          stage ('Notary') {
+            steps {
+              bat 'curl -v -X POST "https://notary.bittorrent.com/api/v1/jobs?input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
+            }
+          }
+
 				}
 			}
 			post {
@@ -65,5 +104,5 @@ pipeline {
 				}
 			}
 		}
-	}	
+	}
 }
