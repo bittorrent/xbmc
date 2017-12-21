@@ -44,6 +44,7 @@ pipeline {
                 }
 			}
 		}
+
 		stage('Build on Windows') {
 			agent {
 				node {
@@ -60,7 +61,7 @@ pipeline {
     	}
 
 			steps {
-//				script {
+				script {
 					stage('Checkout Source') {
 						checkout scm
 					}
@@ -119,7 +120,7 @@ pipeline {
 							bat "call wget '${env.MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}'"
 //						}
 					}
-//				}
+				}
 			}
 			post {
 				always {
