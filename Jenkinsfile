@@ -44,6 +44,7 @@ pipeline {
 			stage('Checkout Source') {
         steps {
           checkout scm
+          bat "git clean -xdf"
           bat "git submodule update --init --recursive addons\\*bt*"
         }
 			}
