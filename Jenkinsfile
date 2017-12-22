@@ -87,7 +87,7 @@ pipeline {
       }
 		}
     */
-    
+
     stage ('Pre-sign') {
 //      when {
 //        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
@@ -115,8 +115,10 @@ pipeline {
 //        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
 //      }
       steps {
-        withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
-          s3Upload(file: "play.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/play.exe")
+        dir ('project\\Win32BuildSetup') {
+          withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
+            s3Upload(file: "Play*.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
+          }
         }
       }
     }
@@ -126,7 +128,7 @@ pipeline {
 //          expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
 //      }
       steps {
-        bat 'curl -v -X POST "${MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}input_file_path=play/%BUILD_NUMBER%/play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
+        bat 'curl -v -X POST "${MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
       }
     }
 	}
