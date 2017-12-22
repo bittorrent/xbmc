@@ -1,8 +1,5 @@
 #!groovy
 
-MEDIA_SERVER_JENKINS_CREDS_PRE_SIGNING_KEY_ID = "JenkinsPreSignKey"
-MEDIA_SERVER_S3_CREDS_VIA_JENKINS = "bt-play-rw"
-
 BT_JENKINS_ARTIFACT_BUCKET = ''
 WIN_BUNDLED_SOFTWARE_PATH = 'media_server/bundled_software/windows/'
 BITTORRENT_INSTALLER = 'BitTorrent.exe'
@@ -33,49 +30,84 @@ pipeline {
 	}
 
 	environment {
+    PLAY_S3_CREDS = credentials("AWS_PLAY_MOBILE_ORG_ID")
+    MAIN_S3_CREDS = credentials("AWS_PLAY_MAIN_ORG_ID")
 		JENKINS_CODE_SIGNING_KEY = credentials("JenkinsPreSignKey")
 		MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
 		MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
+    BUILD_ARTIFACTS_S3_BUCKET = credentials("BuildArtifactsS3Bucket")
 		MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
 		PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
 	}
 
 	stages {
-			stage('Checkout Source') {
-        steps {
-          checkout scm
-          bat "git clean -xdf"
-          bat "git submodule update --init --recursive addons\\*bt*"
-        }
-			}
-			stage('Download Bundled Software') {
-        steps {
-          withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: MEDIA_SERVER_S3_CREDS_VIA_JENKINS) {
-  					s3Download(file: BITTORRENT_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, force:true)
-            s3Download(file: BONJOUR_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER, force:true)
-            s3Download(file: FFMPEG_STATIC, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_FFMPEG_PATH, force:true)
-  				}
-          bat "Echo moving the ffmpeg static exe to the proper location for build."
-          bat "del ${BT_TRANSCODE_FFMPEG_PATH}"
-          bat "move ${FFMPEG_STATIC} ${BT_TRANSCODE_FFMPEG_PATH}"
-        }
-			}
-
-  		stage('Download XBMC DEPS') {
-        steps {
-          echo ""
-  				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
-        }
-			}
-			stage('Download Mingw Build Env') {
-        steps {
-          bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
-        }
-			}
-			stage('Build') {
-        steps {
-          bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
-        }
-			}
+		stage('Checkout Source') {
+      steps {
+        checkout scm
+        bat "git submodule update --init --recursive addons\\*bt*"
+      }
+//      when {
+//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
+//      steps {
+//        bat 'git clean -xdf'
+//      }
 		}
+
+    /*
+		stage('Download Bundled Software') {
+      steps {
+        withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${PLAY_S3_CREDS}") {
+					s3Download(file: BITTORRENT_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, force:true)
+          s3Download(file: BONJOUR_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER, force:true)
+          s3Download(file: FFMPEG_STATIC, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_FFMPEG_PATH, force:true)
+				}
+        bat "Echo moving the ffmpeg static exe to the proper location for build."
+        bat "del ${BT_TRANSCODE_FFMPEG_PATH}"
+        bat "move ${FFMPEG_STATIC} ${BT_TRANSCODE_FFMPEG_PATH}"
+      }
+		}
+
+		stage('Download XBMC DEPS') {
+      steps {
+        echo ""
+				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
+      }
+		}
+
+		stage('Download Mingw Build Env') {
+      steps {
+        bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
+      }
+		}
+
+		stage('Build') {
+      steps {
+        bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+      }
+		}
+    */
+
+    stage ('Signing') {
+//      when {
+//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
+      steps {
+        dir ('project\\Win32BuildSetup') {
+          // pre-sign
+          bat "python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} .\\BUILD_WIN32"
+
+          // rebuild the exe
+          bat 'call .\\BuildSetup.bat installeronly'
+
+          // upload and use notary for secure signing
+          bat 'copy /y PlaySetup*.exe Play.exe'
+          withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
+            s3Upload(file: "Play.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
+          }
+          bat 'curl -v -X POST "%MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL%input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
+        }
+      }
+    }
+	}
 }
