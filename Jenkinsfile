@@ -45,17 +45,14 @@ pipeline {
       steps {
         checkout scm
         bat "git submodule update --init --recursive addons\\*bt*"
+        script {
+          release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
+          if (release) {
+            bat "git clean -xdf"
+          }
+        }
       }
 		}
-
-    stage('Cleaning - release builds') {
-      when {
-        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-      }
-      steps {
-        bat 'git clean -xdf'
-      }
-    }
 
 		stage('Download Bundled Software') {
       steps {
