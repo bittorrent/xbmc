@@ -46,15 +46,20 @@ pipeline {
         checkout scm
         bat "git submodule update --init --recursive addons\\*bt*"
       }
-//      when {
-//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-//      }
-//      steps {
-//        bat 'git clean -xdf'
-//      }
 		}
 
-    /*
+    stage('Cleaning - release builds') {
+      when {
+        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+      }
+      steps {
+        bat 'git clean -xdf'
+
+        // ensure that mingw is built for release
+        params.build_setup_args = ""
+      }
+    }
+
 		stage('Download Bundled Software') {
       steps {
         withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${PLAY_S3_CREDS}") {
@@ -86,12 +91,11 @@ pipeline {
         bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
       }
 		}
-    */
 
-    stage ('Signing') {
-//      when {
-//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-//      }
+    stage ('Signing - release builds') {
+      when {
+        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+      }
       steps {
         dir ('project\\Win32BuildSetup') {
           // pre-sign
