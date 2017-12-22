@@ -54,6 +54,7 @@ pipeline {
 //      }
 		}
 
+    /*
 		stage('Download Bundled Software') {
       steps {
         withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${PLAY_S3_CREDS}") {
@@ -85,7 +86,8 @@ pipeline {
         bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
       }
 		}
-
+    */
+    
     stage ('Pre-sign') {
 //      when {
 //        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
