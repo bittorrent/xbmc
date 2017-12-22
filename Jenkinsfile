@@ -54,9 +54,6 @@ pipeline {
       }
       steps {
         bat 'git clean -xdf'
-
-        // ensure that mingw is built for release
-        params.build_setup_args = ""
       }
     }
 
@@ -88,7 +85,15 @@ pipeline {
 
 		stage('Build') {
       steps {
-        bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+        script {
+            release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
+            if (release) {
+              bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT}"
+            }
+            else {
+            bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+            }
+        }
       }
 		}
 
