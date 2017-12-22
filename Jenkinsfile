@@ -95,27 +95,7 @@ pipeline {
       steps {
         dir ('project\\Win32BuildSetup') {
           bat "python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} .\\BUILD_WIN32"
-        }
-      }
-    }
-
-    stage ('Assemble pre-signed exe') {
-//      when {
-//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-//      }
-      steps {
-        dir ('project\\Win32BuildSetup') {
           bat 'call .\\BuildSetup.bat installeronly'
-        }
-      }
-    }
-
-    stage ('Upload pre-signed exe') {
-//      when {
-//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-//      }
-      steps {
-        dir ('project\\Win32BuildSetup') {
           bat 'copy /y PlaySetup*.exe Play.exe'
           withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
             s3Upload(file: "Play.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
