@@ -19,12 +19,11 @@ WIN_DOWNLOAD_MINGW_ENV_SCRIPT = 'DownloadMingwBuildEnv.bat'
 pipeline {
 	agent {
 		node {
-			label 'Joes_PC'
+			label 'windows'
 		}
 	}
 
 	parameters {
-		//string(name: 'branch_to_build', defaultValue: 'origin/develop', description: 'The git branch to build.')
 		string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
 		booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
 	}
@@ -45,16 +44,15 @@ pipeline {
       steps {
         checkout scm
         bat "git submodule update --init --recursive addons\\*bt*"
+        script {
+          release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
+          if (release) {
+            bat "git clean -xdf"
+          }
+        }
       }
-//      when {
-//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-//      }
-//      steps {
-//        bat 'git clean -xdf'
-//      }
 		}
 
-    /*
 		stage('Download Bundled Software') {
       steps {
         withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${PLAY_S3_CREDS}") {
@@ -83,15 +81,22 @@ pipeline {
 
 		stage('Build') {
       steps {
-        bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+        script {
+          release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
+          if (release) {
+            bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT}"
+          }
+          else {
+            bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT} ${params.build_setup_args}"
+          }
+        }
       }
 		}
-    */
 
     stage ('Signing') {
-//      when {
-//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-//      }
+      when {
+        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+      }
       steps {
         dir ('project\\Win32BuildSetup') {
           // pre-sign
