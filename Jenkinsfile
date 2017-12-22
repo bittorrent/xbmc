@@ -116,8 +116,9 @@ pipeline {
 //      }
       steps {
         dir ('project\\Win32BuildSetup') {
+          bat 'copy /y PlaySetup*.exe Play.exe'
           withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
-            s3Upload(file: "Play*.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
+            s3Upload(file: "Play.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
           }
         }
       }
