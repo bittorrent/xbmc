@@ -46,12 +46,12 @@ pipeline {
         checkout scm
         bat "git submodule update --init --recursive addons\\*bt*"
       }
-      when {
-        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-      }
-      steps {
-        bat 'git clean -xdf'
-      }
+//      when {
+//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
+//      steps {
+//        bat 'git clean -xdf'
+//      }
 		}
 
 		stage('Download Bundled Software') {
@@ -87,9 +87,9 @@ pipeline {
 		}
 
     stage ('Pre-sign') {
-      when {
-        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-      }
+//      when {
+//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
       steps {
         dir ('project\\Win32BuildSetup') {
           bat "python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} .\\BUILD_WIN32"
@@ -98,9 +98,9 @@ pipeline {
     }
 
     stage ('Assemble pre-signed exe') {
-      when {
-        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-      }
+//      when {
+//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
       steps {
         dir ('project\\Win32BuildSetup') {
           bat 'call .\\BuildSetup.bat installeronly'
@@ -109,20 +109,20 @@ pipeline {
     }
 
     stage ('Upload pre-signed exe') {
-      when {
-        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-      }
+//      when {
+//        expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
       steps {
-        withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: ${MAIN_S3_CREDS}) {
+        withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
           s3Upload(file: "play.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/play.exe")
         }
       }
     }
 
     stage ('Notary Signing') {
-      when {
-          expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
-      }
+//      when {
+//          expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
+//      }
       steps {
         bat 'curl -v -X POST "${MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}input_file_path=play/%BUILD_NUMBER%/play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
       }
