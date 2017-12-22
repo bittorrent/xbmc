@@ -428,6 +428,8 @@ Function .onInstSuccess
   FileWrite $4 $INSTALL_GUID
   FileClose $4
 
+  RMDir /r "$INSTDIR\Prerequisites"
+
   Call RunApplication
   !insertmacro BenchPing "install" "success"
 FunctionEnd
