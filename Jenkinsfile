@@ -129,7 +129,7 @@ pipeline {
 //          expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
 //      }
       steps {
-        bat 'curl -v -X POST "${MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
+        bat 'curl -v -X POST "%MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL%input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
       }
     }
 	}
