@@ -17,30 +17,30 @@ WIN_DOWNLOAD_BUILD_DEPS_SCRIPT = 'DownloadBuildDeps.bat'
 WIN_DOWNLOAD_MINGW_ENV_SCRIPT = 'DownloadMingwBuildEnv.bat'
 
 pipeline {
-	agent {
-		node {
-			label 'windows'
-		}
-	}
+  agent {
+    node {
+      label 'windows'
+    }
+  }
 
-	parameters {
-		string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
-		booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
-	}
+  parameters {
+    string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
+    booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
+  }
 
-	environment {
+  environment {
     PLAY_S3_CREDS = credentials("AWS_PLAY_MOBILE_ORG_ID")
     MAIN_S3_CREDS = credentials("AWS_PLAY_MAIN_ORG_ID")
-		JENKINS_CODE_SIGNING_KEY = credentials("JenkinsPreSignKey")
-		MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
-		MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
+    JENKINS_CODE_SIGNING_KEY = credentials("JenkinsPreSignKey")
+    MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
+    MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
     BUILD_ARTIFACTS_S3_BUCKET = credentials("BuildArtifactsS3Bucket")
-		MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
-		PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
-	}
+    MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
+    PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
+  }
 
-	stages {
-		stage('Checkout Source') {
+  stages {
+    stage('Checkout Source') {
       steps {
         checkout scm
         bat "git submodule update --init --recursive addons\\*bt*"
@@ -51,35 +51,35 @@ pipeline {
           }
         }
       }
-		}
+    }
 
-		stage('Download Bundled Software') {
+    stage('Download Bundled Software') {
       steps {
         withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${PLAY_S3_CREDS}") {
-					s3Download(file: BITTORRENT_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, force:true)
+          s3Download(file: BITTORRENT_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BITTORRENT_INSTALLER, force:true)
           s3Download(file: BONJOUR_INSTALLER, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_BONJOUR_INSTALLER, force:true)
           s3Download(file: FFMPEG_STATIC, bucket: "${MEDIA_SERVER_S3_BUCKET}", path: WIN_BUNDLED_SOFTWARE_FFMPEG_PATH, force:true)
-				}
+        }
         bat "Echo moving the ffmpeg static exe to the proper location for build."
         bat "del ${BT_TRANSCODE_FFMPEG_PATH}"
         bat "move ${FFMPEG_STATIC} ${BT_TRANSCODE_FFMPEG_PATH}"
       }
-		}
+    }
 
-		stage('Download XBMC DEPS') {
+    stage('Download XBMC DEPS') {
       steps {
         echo ""
-				bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
+        bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
       }
-		}
+    }
 
-		stage('Download Mingw Build Env') {
+    stage('Download Mingw Build Env') {
       steps {
         bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
       }
-		}
+    }
 
-		stage('Build') {
+    stage('Build') {
       steps {
         script {
           release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
@@ -91,7 +91,7 @@ pipeline {
           }
         }
       }
-		}
+    }
 
     stage ('Signing') {
       when {
@@ -114,5 +114,5 @@ pipeline {
         }
       }
     }
-	}
+  }
 }
