@@ -40,6 +40,7 @@ pipeline {
   }
 
   stages {
+
     stage('Checkout Source') {
       steps {
         checkout scm
@@ -103,13 +104,18 @@ pipeline {
           bat "python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} .\\BUILD_WIN32"
 
           // rebuild the exe
+          bat 'del .\\Play*.exe'
           bat 'call .\\BuildSetup.bat installeronly'
 
+          // pre-sign the installer again
+          powershell "\$env:PLAY_INSTALLER = Resolve-Path .\\Play*.exe ; python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} \$env:PLAY_INSTALLER"
+          powershell "\$env:PLAY_INSTALLER = Resolve-Path .\\Play*.exe ; Copy-Item \$env:PLAY_INSTALLER -Destination .\\BitTorrentPlay.exe"
+
           // upload and use notary for secure signing
-          bat 'copy /y PlaySetup*.exe Play.exe'
           withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
-            s3Upload(file: "Play.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
+            s3Upload(file: ".\\BitTorrentPlay.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
           }
+
           bat 'curl -v -X POST "%MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL%input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
         }
       }
