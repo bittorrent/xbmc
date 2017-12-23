@@ -34,22 +34,12 @@ def main():
         print("Cannot find KEY_PATH.\nAborting!!!!")
         exit(-1)
 
-    if (not os.path.exists(FILE_PATH)):
-        print("Cannot find FILE_PATH.\nAborting!!!!")
-        exit(-1)
-
     # handle the Play.exe file alone
     if os.path.isfile(FILE_PATH):
         sign_file(KEY_PATH, os.path.abspath(FILE_PATH))
     else:
-        # handle a dir of files
-        for root, subFolders, files in os.walk(FILE_PATH):
-            for file in files:
-                f = os.path.join(root,file)
-                if (f.endswith('.dll') or f.endswith('.exe')):
-                    sign_file(KEY_PATH, f)
-                else:
-                    print("skipping %s" % f)
+        print("Cannot find FILE_PATH.\nAborting!!!!")
+        exit(-1)
 
 if __name__ == "__main__":
     main()

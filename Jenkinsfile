@@ -25,7 +25,6 @@ pipeline {
 
   parameters {
     string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
-    booleanParam(name: 'perform_signing', defaultValue: false, description: "Build and sign the artifacts and installer? Default is 'False'.")
   }
 
   environment {
@@ -35,12 +34,12 @@ pipeline {
     MEDIA_SERVER_S3_BUCKET = credentials("MediaServerS3Bucket")
     MEDIA_SERVER_S3_REGION = credentials("MediaServerS3Region")
     BUILD_ARTIFACTS_S3_BUCKET = credentials("BuildArtifactsS3Bucket")
+    SIGNED_ARTIFACTS_S3_BUCKET = credentials("SignedArtifactsS3Bucket")
     MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL = credentials("MediaServerSigningNotaryServerUrl")
     PATH = "${LOCALAPPDATA}\\Programs\\Python\\Python36-32;${PATH}"
   }
 
   stages {
-
     stage('Checkout Source') {
       steps {
         checkout scm
@@ -69,7 +68,6 @@ pipeline {
 
     stage('Download XBMC DEPS') {
       steps {
-        echo ""
         bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
       }
     }
@@ -100,23 +98,55 @@ pipeline {
       }
       steps {
         dir ('project\\Win32BuildSetup') {
-          // pre-sign
-          bat "python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} .\\BUILD_WIN32"
+          println "presign individual components with self-signed cert"
+          powershell "\$currentdir = Get-Location ; \
+                      Remove-Item \$currentdir\\presigned -recurse ; \
+                      \$presigneddir = New-Item -ItemType directory -Force -Path \$currentdir\\presigned ; \
+                      \$files = Get-ChildItem -File BUILD_WIN32\\application\\ | Where-Object {\$_.extension -eq '.dll' -or \$_.extension -eq '.exe'} ; \
+                      foreach (\$file in \$files) { \
+                        python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} \$file.fullName ; \
+                        Copy-Item -force \$file.fullName \$presigneddir.fullName \
+                      }"
 
-          // rebuild the exe
+          println "upload presigned components"
+          withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
+            s3Upload(file: "presigned", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/presigned/")
+          }
+
+          println "sign individual components with notary"
+          powershell "\$files = Get-ChildItem -File presigned\\ ; \
+                      foreach (\$file in \$files) { \
+                        &\"C:\\Program Files (x86)\\GnuWin32\\bin\\curl\" -v -X POST \"${MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}input_file_path=play/${BUILD_NUMBER}/presigned/\$file.name&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=${BUILD_NUMBER}&app_url=https://www.bittorrent.com\" \
+                      }"
+
+          println "downloading notary signed artifacts"
+          withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
+            s3Download(file: "${WORKSPACE}/signed", bucket: "${SIGNED_ARTIFACTS_S3_BUCKET}", path: "play/win/play/${BUILD_NUMBER}/", force:true)
+          }
+
+          println "copy the sign artifacts back where they need to be for building the installer"
+          powershell "\$currentdir = Get-Location ; \
+                      \$files = Get-ChildItem -File \$currentdir\\signed ; \
+                      foreach (\$file in \$files) { \
+                        Copy-Item -force \$file.fullName \$currentdir\\BUILD_WIN32\\application\\\$file.name \
+                      }"
+
+          println "rebuild the installer"
           bat 'del .\\Play*.exe'
           bat 'call .\\BuildSetup.bat installeronly'
 
-          // pre-sign the installer again
-          powershell "\$env:PLAY_INSTALLER = Resolve-Path .\\Play*.exe ; python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} \$env:PLAY_INSTALLER"
-          powershell "\$env:PLAY_INSTALLER = Resolve-Path .\\Play*.exe ; Copy-Item \$env:PLAY_INSTALLER -Destination .\\BitTorrentPlay.exe"
+          println "presign the new installer"
+          powershell "\$installer = Resolve-Path .\\Play*.exe ; \
+                      python ${WORKSPACE}\\jenkins-pre-sign.py ${JENKINS_CODE_SIGNING_KEY} \$installer ; \
+                      Copy-Item \$installer -Destination BitTorrentPlay.exe"
 
-          // upload and use notary for secure signing
+          println "upload the presigned installer"
           withAWS(region: "${MEDIA_SERVER_S3_REGION}", credentials: "${MAIN_S3_CREDS}") {
             s3Upload(file: ".\\BitTorrentPlay.exe", bucket: "${BUILD_ARTIFACTS_S3_BUCKET}", path: "play/${BUILD_NUMBER}/Play.exe")
           }
 
-          bat 'curl -v -X POST "%MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL%input_file_path=play/%BUILD_NUMBER%/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=%BUILD_NUMBER%&app_url=https://www.bittorrent.com"'
+          println "sign the installer"
+          powershell "&\"C:\\Program Files (x86)\\GnuWin32\\bin\\curl\" -v -X POST \"${MEDIA_SERVER_SIGNING_NOTARY_SERVER_URL}input_file_path=play/${BUILD_NUMBER}/Play.exe&output_sig_types=authenticode&track=stable&app_name=play&platform=win&job_name=play&build_num=${BUILD_NUMBER}&app_url=https://www.bittorrent.com\""
         }
       }
     }
