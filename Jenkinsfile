@@ -40,7 +40,6 @@ pipeline {
   }
 
   stages {
-  /*
     stage('Checkout Source') {
       steps {
         checkout scm
@@ -93,7 +92,7 @@ pipeline {
         }
       }
     }
-*/
+
     stage ('Signing') {
       when {
         expression { return env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/') }
