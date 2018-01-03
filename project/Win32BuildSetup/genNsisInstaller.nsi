@@ -534,4 +534,6 @@ Function un.onInit
   !insertmacro initBenchPing
 
   !insertmacro BenchPing "uninstall" "start"
+
+  !insertmacro UAC_RunElevated
 FunctionEnd
