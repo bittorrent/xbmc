@@ -93,7 +93,7 @@ pipeline {
       }
       post {
         success {
-          archive "project/Win32BuildSetup/BUILD_WIN32/PlaySetup*.exe"
+          archive "project\Win32BuildSetup\PlaySetup*.exe"
         }
       }
     }
