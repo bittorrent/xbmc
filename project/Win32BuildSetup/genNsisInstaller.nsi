@@ -96,7 +96,8 @@ RequestExecutionLevel user
   !define MUI_FINISHPAGE_LINK "Please visit ${WEBSITE} for more information."
   !define MUI_FINISHPAGE_LINK_LOCATION "${WEBSITE}"
   !define MUI_FINISHPAGE_RUN
-  !define MUI_FINISHPAGE_RUN_UNCHECKED
+  !define MUI_FINISHPAGE_RUN_NOTCHECKED
+  !define MUI_FINISHPAGE_RUN_TEXT "Start Play and BitTorrent"
   !define MUI_FINISHPAGE_RUN_FUNCTION "RunApplication"
   !define MUI_ABORTWARNING
 ;--------------------------------
@@ -140,8 +141,12 @@ Function RunApplication
   StrCpy $2 ""
 
   !insertmacro BenchPing "install" "RunApplication"
-
+    
+  ; Runs the Play.exe
   !insertmacro UAC_AsUser_ExecShell "" "$1" "$2" "$INSTDIR" "SW_SHOWMINIMIZED"
+
+  ; Runs the Bittorrent.exe via the Desktop shortcut which is always set via this installer's force installer args when bittorrent is installed.
+  !insertmacro UAC_AsUser_ExecShell "" "BitTorrent.lnk" "" "$DESKTOP" "SW_SHOWMINIMIZED"
 FunctionEnd
 
 Function CallbackDirLeave
