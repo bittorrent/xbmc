@@ -54,7 +54,7 @@ RequestExecutionLevel user
   InstallDir "$PROGRAMFILES\${COMPANY_NAME}\${APP_NAME}"
 
   ;Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\${COMPANY_NAME}\${APP_NAME}" ""
+  InstallDirRegKey HKCU "Software\${APP_NAME}" ""
 
   InstProgressFlags smooth
 
@@ -151,7 +151,7 @@ FunctionEnd
 
 Function HandleOldPlayInstallation
   Var /GLOBAL INSTDIR_PLAY
-  ReadRegStr $INSTDIR_PLAY HKCU "Software\${COMPANY_NAME}\${APP_NAME}" ""
+  ReadRegStr $INSTDIR_PLAY HKCU "Software\${APP_NAME}" ""
 
   ;if former Play installation was detected in a different directory then the destination dir
   ;ask for uninstallation
@@ -290,7 +290,7 @@ Section "${APP_NAME}" SecAPP
   File /r "${app_root}\application\userdata\*.*"
 
   ;Store installation folder
-  WriteRegStr HKCU "Software\${COMPANY_NAME}\${APP_NAME}" "" $INSTDIR
+  WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
 
   ;Create uninstaller
   SetOutPath "$INSTDIR"
@@ -401,7 +401,7 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\$StartMenuFolder"
 
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
-  DeleteRegKey /ifempty HKCU "Software\${COMPANY_NAME}\${APP_NAME}"
+  DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
 
   ;remove firewall exceptions for app and script.bt.transcode addon ffmpeg
   nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${START_EXE}"
