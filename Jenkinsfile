@@ -27,6 +27,7 @@ pipeline {
     string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
     booleanParam(name: 'skip_deps_and_mingw', defaultValue: false, description: "Skips downloading the xbmc deps and building of the mingq build env, only use this if you know what you are doing.")
     booleanParam(name: 'override_release_build_check', defaultValue: false, description: "Overrides the release branch check when building so that 'build_setup_args' is respected.")
+    booleanParam(name: 'override_git_clean', defaultValue: false, description: "Override default git clean operation.")
   }
 
   environment {
@@ -50,7 +51,10 @@ pipeline {
           release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
           if (release) {
             bat "git config core.longpaths true"
-            bat "git clean -xdf"
+
+            if (params.override_git_clean == false) {
+                bat "git clean -xdf"
+            }
           }
         }
       }
