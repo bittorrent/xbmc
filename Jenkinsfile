@@ -19,7 +19,7 @@ WIN_DOWNLOAD_MINGW_ENV_SCRIPT = 'DownloadMingwBuildEnv.bat'
 pipeline {
   agent {
     node {
-      label 'windows_10'
+      label 'windows'
     }
   }
 
