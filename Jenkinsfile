@@ -25,6 +25,7 @@ pipeline {
 
   parameters {
     string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
+    booleanParam(name: 'override_release_build_check', defaultValue: false, description: "Overrides the release branch check when building so that 'build_setup_args' is respected.")
   }
 
   environment {
@@ -83,7 +84,7 @@ pipeline {
       steps {
         script {
           release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
-          if (release) {
+          if (release && params.override_release_build_check == false) {
             bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT}"
           }
           else {
