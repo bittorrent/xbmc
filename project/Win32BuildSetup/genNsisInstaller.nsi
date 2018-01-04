@@ -257,6 +257,9 @@ Section -StartMenu
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
      "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
      "" "Uninstall ${APP_NAME}."
+  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+     "" "Start ${APP_NAME}."
 
   ; Desktop Shortcut
   File "${ICON}"
