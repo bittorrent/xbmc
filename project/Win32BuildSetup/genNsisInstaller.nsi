@@ -96,7 +96,6 @@ RequestExecutionLevel user
   !define MUI_FINISHPAGE_LINK "Please visit ${WEBSITE} for more information."
   !define MUI_FINISHPAGE_LINK_LOCATION "${WEBSITE}"
   !define MUI_FINISHPAGE_RUN
-  !define MUI_FINISHPAGE_RUN_NOTCHECKED
   !define MUI_FINISHPAGE_RUN_TEXT "Start Play and BitTorrent"
   !define MUI_FINISHPAGE_RUN_FUNCTION "RunApplication"
   !define MUI_ABORTWARNING
