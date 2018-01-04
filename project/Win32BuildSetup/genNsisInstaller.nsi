@@ -369,6 +369,7 @@ ${NSD_GetState} $UnPageProfileCheckbox $UnPageProfileCheckbox_State
 FunctionEnd
 
 Section "Uninstall"
+  SetOutPath $TEMP
 
   ;ADD YOUR OWN FILES HERE...
   RMDir /r "$INSTDIR\addons"
@@ -533,4 +534,6 @@ Function un.onInit
   !insertmacro initBenchPing
 
   !insertmacro BenchPing "uninstall" "start"
+
+  !insertmacro UAC_RunElevated
 FunctionEnd

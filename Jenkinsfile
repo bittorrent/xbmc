@@ -91,6 +91,11 @@ pipeline {
           }
         }
       }
+      post {
+        success {
+          archive "project/Win32BuildSetup/PlaySetup*.exe"
+        }
+      }
     }
 
     stage ('Signing') {
