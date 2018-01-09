@@ -18,3 +18,7 @@
 	path = addons/service.bt.libraryautoupdate
 	url = git@github.com:bittorrent/xbmclibraryautoupdate.git
 	branch = master
+[submodule "addons/repository.bt.play"]
+	path = addons/repository.bt.play
+	url = git@github.com:bittorrent/repository.bt.play.git
+	branch = master
