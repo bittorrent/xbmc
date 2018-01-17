@@ -15,6 +15,7 @@
 ;--------------------------------
 ;Include Modern UI
 
+!include "StrFunc.nsh"
 !include "MUI2.nsh"
 !include "nsDialogs.nsh"
 !include "LogicLib.nsh"
@@ -31,7 +32,17 @@
 ;Global vars for bench
 Var /GLOBAL OSV
 Var /GLOBAL LANG
-Var /GLOBAL INSTALL_GUID
+Var /GLOBAL INSTALL_GUID 
+
+;--------------------------------
+;Global force install vars
+Var /GLOBAL SILENT_AND_FORCEINSTALL
+Var /GLOBAL FORCEINSTALL_ADD_START_MENU_LINK
+Var /GLOBAL FORCEINSTALL_ADD_DESKTOP_LINK
+Var /GLOBAL FORCEINSTALL_ADD_QUICKLAUNCH_LINK
+Var /GLOBAL FORCEINSTALL_CREATE_UNINSTALLER_SETTINGS
+Var /GLOBAL FORCEINSTALL_RUN_ON_SYSTEM_STARTUP
+Var /GLOBAL FORCEINSTALL_ADD_FIREWALL_RULES
 
 ;--------------------------------
 ; Bittorrent Installer Args
@@ -253,24 +264,64 @@ Section -StartMenu
   !insertmacro MUI_STARTMENU_WRITE_BEGIN 0 ;This macro sets $SMDir and skips to MUI_STARTMENU_WRITE_END if the "Don't create shortcuts" checkbox is checked...   
   SetOutPath "$INSTDIR"
   
+
   ; Create Shortcuts
-  CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-     "" "Start ${APP_NAME}."
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
-     "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
-     "" "Uninstall ${APP_NAME}."
-  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
-     "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
-     "" "Start ${APP_NAME}."
+
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_ADD_START_MENU_LINK = 1
+      CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
+      CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+         "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+         "" "Start ${APP_NAME}."
+    ${EndIf}
+  ${Else}
+    CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+       "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+       "" "Start ${APP_NAME}."
+  ${EndIf}
+
+
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_CREATE_UNINSTALLER_SETTINGS = 1
+      CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+         "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
+         "" "Uninstall ${APP_NAME}."
+    ${EndIf}
+  ${Else}
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+       "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
+       "" "Uninstall ${APP_NAME}."
+  ${EndIf}
+
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_ADD_QUICKLAUNCH_LINK = 1
+      CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+         "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+         "" "Start ${APP_NAME}."
+    ${EndIf}
+  ${Else}
+    CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+       "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+       "" "Start ${APP_NAME}."
+  ${EndIf}
 
   ; Desktop Shortcut
-  File "${ICON}"
-  createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_ADD_DESKTOP_LINK = 1
+      File "${ICON}"
+      createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+    ${EndIf}
+  ${Else}
+    File "${ICON}"
+    createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+  ${EndIf}
   
   ; Set the Bittorrent Installer Args to install shortcuts
-  StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_SHORTCUTS"
+  ${If} $SILENT_AND_FORCEINSTALL = 0
+    ; only set the bittorrent installer args like this if we are NOT in a silent install.
+    StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_SHORTCUTS"
+  ${EndIf}
 
   
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -300,32 +351,65 @@ Section "${APP_NAME}" SecAPP
   WriteRegStr HKCU "Software\${APP_NAME}" "" $INSTDIR
 
   ;Create uninstaller
-  SetOutPath "$INSTDIR"
-  WriteUninstaller "$INSTDIR\Uninstall.exe"
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_CREATE_UNINSTALLER_SETTINGS = 1
+      SetOutPath "$INSTDIR"
+      WriteUninstaller "$INSTDIR\Uninstall.exe"
+      ;add entry to add/remove programs
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "DisplayName" "${APP_NAME}"
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "UninstallString" "$INSTDIR\uninstall.exe"
+      WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "NoModify" 1
+      WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "NoRepair" 1
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "InstallLocation" "$INSTDIR"
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "DisplayIcon" "$INSTDIR\${START_EXE},0"
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "Publisher" "${COMPANY_NAME}"
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "HelpLink" "${WEBSITE}"
+      WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                     "URLInfoAbout" "${WEBSITE}"
+    ${EndIf}
+  ${Else}
+    SetOutPath "$INSTDIR"
+    WriteUninstaller "$INSTDIR\Uninstall.exe"
+    ;add entry to add/remove programs
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "DisplayName" "${APP_NAME}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "UninstallString" "$INSTDIR\uninstall.exe"
+    WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "NoModify" 1
+    WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "NoRepair" 1
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "InstallLocation" "$INSTDIR"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "DisplayIcon" "$INSTDIR\${START_EXE},0"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "Publisher" "${COMPANY_NAME}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "HelpLink" "${WEBSITE}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "URLInfoAbout" "${WEBSITE}"
+  ${EndIf}
 
-  ;add entry to add/remove programs
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "DisplayName" "${APP_NAME}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "UninstallString" "$INSTDIR\uninstall.exe"
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "NoModify" 1
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "NoRepair" 1
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "DisplayIcon" "$INSTDIR\${START_EXE},0"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "Publisher" "${COMPANY_NAME}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "HelpLink" "${WEBSITE}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                 "URLInfoAbout" "${WEBSITE}"
-
+  
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
-  nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
-  nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_ADD_FIREWALL_RULES = 1
+      nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
+      nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
+    ${EndIf}
+  ${Else}
+    nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
+    nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
+  ${EndIf}
   Pop $0
 
   ;vs redist installer Section
@@ -446,16 +530,41 @@ Function un.onUninstSuccess
   !insertmacro BenchPing "uninstall" "success"
 FunctionEnd
 
+!macro CMDPAR Tag OutVar
+	Push ${TAG}
+	Call GetParameters
+	Pop ${OutVar}
+!macroend
+ 
+!define CMDPAR "!insertmacro CMDPAR"
+
 Function .onInit
   ; Initialize bench ping system variables (installer)
   !insertmacro initBenchPing
-  
-  ; Initialize bittorrent installer args
-  ; Installer Arg Definition: https://docs.google.com/document/d/1UYPz7L6tEZAU26EH47WzaXEgZfBv_PFQFFuNhDPPNOk/edit?ts=5a32b91c
-  StrCpy $BITTORRENT_ARGS_NO_SHORTCUTS "1110010101111000"
-  StrCpy $BITTORRENT_ARGS_SHORTCUTS "1110010101111110"
-  StrCpy $BITTORRENT_INSTALLER_ARGS $BITTORRENT_ARGS_NO_SHORTCUTS ; No start menu and no desktop shortcuts
 
+  Var /GLOBAL FORCEINSTALL_BIN_STRING
+  StrCpy $SILENT_AND_FORCEINSTALL 0
+  
+  ${If} ${Silent}
+    ; First check if forceinstall was set, if not bail out. 
+    ; Set forceinstall vars if they exist and if silent install
+    ${CMDPAR} "/FORCEINSTALL" $FORCEINSTALL_BIN_STRING
+
+    ${IfNot} $FORCEINSTALL_BIN_STRING == ""
+	Push $FORCEINSTALL_BIN_STRING
+	Call validateAndApplyForceInstallOptions
+    ${EndIf}
+  ${EndIf}
+
+  ${If} $SILENT_AND_FORCEINSTALL = 0
+    ; Initialize bittorrent installer args
+    ; Installer Arg Definition: https://docs.google.com/document/d/1UYPz7L6tEZAU26EH47WzaXEgZfBv_PFQFFuNhDPPNOk/edit?ts=5a32b91c
+    StrCpy $BITTORRENT_ARGS_NO_SHORTCUTS "1110010101111000"
+    StrCpy $BITTORRENT_ARGS_SHORTCUTS "1110010101111110"
+    StrCpy $BITTORRENT_INSTALLER_ARGS $BITTORRENT_ARGS_NO_SHORTCUTS ; No start menu and no desktop shortcuts
+  ${EndIf}
+
+  
 
   !insertmacro BenchPing "install" "start"
 
@@ -543,4 +652,220 @@ Function un.onInit
   !insertmacro BenchPing "uninstall" "start"
 
   !insertmacro UAC_RunElevated
+FunctionEnd
+
+Function validateAndApplyForceInstallOptions
+  ; validates, roughly, that the force install options are valid
+  ; and takes the options and first applys them to the bittorrent
+  ; installer silent force install options, then parses and sets
+  ; global vars for the install options for play.
+  Var /GLOBAL forceInstallOptions
+  Var /GLOBAL lenOfForceInstallOptions
+  
+  Pop $forceInstallOptions
+  StrLen $lenOfForceInstallOptions $forceInstallOptions
+
+  StrCpy $BITTORRENT_INSTALLER_ARGS $forceInstallOptions
+
+  ${If} $lenOfForceInstallOptions = 16
+    StrCpy $SILENT_AND_FORCEINSTALL 1
+    Var /GLOBAL optionChar
+    Var /GLOBAL i
+
+    ${ForEach} $i 15 0 - 1
+      StrCpy $optionChar "$forceInstallOptions" 1 $i
+
+      ${Switch} $i
+        ${Case} 15 ; position 1
+	  ; [Placeholder, not used - set to 0]
+	  ${Break}
+
+	${Case} 14 ; position 2
+	  ; Add Start Menu link (see note in “Format of the Installer UI”)
+	  StrCpy $FORCEINSTALL_ADD_START_MENU_LINK "$optionChar"
+	  ${Break}
+
+	${Case} 13 ; position 3
+	  ; Add Desktop shortcut (see note in “Format of the Installer UI”)
+	  StrCpy $FORCEINSTALL_ADD_DESKTOP_LINK "$optionChar"
+          ${Break}
+
+	${Case} 12 ; position 4
+	  ; Add QuickLaunch shortcut
+	  StrCpy $FORCEINSTALL_ADD_QUICKLAUNCH_LINK "$optionChar"
+          ${Break}
+
+	${Case} 11 ; position 5
+	  ; Associate .torrent file extension
+	  ; This will only affect bittorrent so no need to parse and check for play
+          ${Break}
+
+	${Case} 10 ; position 6
+	  ; Associate .btSearch file extension - Use default, set to 1
+	  ; This will only affect bittorrent so no need to parse and check for play
+          ${Break}
+
+	${Case} 9 ; position 7
+	  ; “Copy don’t move” - copy the executable to the install location instead of moving it. - Use default, set to 1 
+	  ; This will only affect bittorrent so no need to parse and check for play
+	  ${Break}
+
+	${Case} 8 ; position 8
+	  ; [Not used - set to 0] 
+	  ${Break}
+
+	${Case} 7 ; position 9
+	  ; Create Uninstall settings - Use default, set to 1
+	  StrCpy $FORCEINSTALL_CREATE_UNINSTALLER_SETTINGS "$optionChar"
+	  ${Break}
+
+	${Case} 6 ; position 10
+	  ; [Not used - set to 0]
+	  ${Break}
+
+	${Case} 5 ; position 11
+	  ; Configure uTorrent to run on system startup
+	  StrCpy $FORCEINSTALL_RUN_ON_SYSTEM_STARTUP "$optionChar"
+	  ${Break}
+
+	${Case} 4 ; position 12
+	  ; [Not used - set to 0]
+	  ${Break}
+
+	${Case} 3 ; position 13
+	  ; [Not used - set to 0]
+	  ${Break}
+
+	${Case} 2 ; position 14
+	  ; Add Firewall rules
+	  StrCpy $FORCEINSTALL_ADD_FIREWALL_RULES "$optionChar"
+	  ${Break}
+
+	${Case} 1 ; position 15
+	  ; Associate Magnet files
+	  ; This will only affect bittorrent so no need to parse and check for play
+	  ${Break}
+
+	${Case} 0 ; position 16
+	  ; Associate bittorrent files
+	  ; This will only affect bittorrent so no need to parse and check for play
+	  ${Break}
+      ${EndSwitch}
+    ${Next}
+  ${Else}
+     StrCpy $SILENT_AND_FORCEINSTALL 0
+  ${EndIf}
+
+FunctionEnd
+
+/*
+	This function will search for the requested command-line option
+	and return the value.  If the value is not found, the function 
+	returns an empty string.
+[USAGE]
+	${CMDPAR} [TAG] [Variable for result] 
+		[Tag] is a unique string to identify the parameter (ie "/B=", etc.)
+		[Variable for result] is the variable in which to hold the result
+[RULES]
+-	Each parameter value must start with the character indicated by PARAM_CHAR.
+-	This function will not verify any parameter--this will be up to the script
+        developer!
+-	Parameters CANNOT be "nested" (a parameter within a parameter)
+-	The function takes advantage of the StrCmp function, which is 
+	NOT case-sensative.  (In other works "/l" and "/L" will be the same)
+-	This function assumes that $CMDLINE will always have quotes around the actual
+	SETUP.EXE file (example: "C:\my path\setup.exe" /b=parameter)
+-	The return value will be trimmed automatically (no spaces at either end)	
+[VARIABLES]
+$0 (str):	string indicating the what the format of the command should be (example: "/B")
+$1 (int): 	Pointer value indicating the current position in the search string
+$2 (str): 	string value of the parameter portion of the command line
+$3 (str): 	Final value of the parameter (When $3=$0, stop copying the 
+                parameter to $R1)
+$4 (bln): 	A 1 or 0 value indicating when to start/stop adding characters
+                to the parameter result (1 means start, 0 means stop)
+$5 (int):	Total Length of the $CMDLINE variable, including the parameter part
+$6 (int):	Single-character string of each character in the parameter field
+$R1 (str):	Value of the requested parameter value
+$7 (int):	Temporary variable for holding numbers
+*/
+ 
+Function GetParameters
+	; all parameters must start with PARAM_CHAR.  (Change value as needed.)
+	!define PARAM_CHAR "/"	
+	Exch $0 ; $0 now contains the TAG string
+	Push $R1
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	Push $5
+	Push $6
+	Push $7
+	StrCpy $1 0	; Initialize the pointer variable
+	StrLen $5 $CMDLINE
+	FindParam:	; Start loop to find the parameter portion of the $CMDLINE
+		IntOp $1 $1 + 1
+		StrCpy $6 $CMDLINE 1 $1
+		StrCmp $6 '"' ExitFindParam 0	; Exit the loop when the last quotes are found
+		Goto FindParam
+	ExitFindParam:
+	IntOp $1 $1 + 2	;  Increment pointer one space to move it one character past the quotes
+	IntOp $7 $5 - $1	; Difference between total string length and the length of the parameter portion
+	IntCmp $7 0 ParamDone ParamDone 0	;If this value is zero, then no parameters have been defined (exit)
+	;MessageBox MB_YESNO|MB_ICONQUESTION "Difference between total string length and the length of the parameter portion:  $7$\n$\r$\n$\rContinue?" IDNO ParamDone
+	StrCpy $2 $CMDLINE $7 $1
+	;MessageBox MB_OK "Parameter portion: [$2]"
+	StrCpy $2 "X$2" ;	 Add one character to the start of the parameter string
+	StrCpy $1 0	; Reset the pointer
+	StrCpy $4 0	; keep characters from being copied to $R1 until we've found a match to the parameter tag
+	FindParamValue:	;Start loop to find the requested parameter value
+		IntOp $1 $1 + 1
+		strCpy $6 $2 1 $1
+		;MessageBox MB_YESNO|MB_ICONQUESTION "Character value: [$6]$\r$\n$$PARAM_CHAR: [${PARAM_CHAR}]$\r$\nContinue?" IDNO PARAMDONE
+		StrCmp $6 "" ParamDone 0 ;Exit if this is the end of the parameter string
+		StrCmp $6 ${PARAM_CHAR} Reset4 NoReset4	; Reset $4 if this is a new parameter
+		Reset4:
+		;StrCpy $R1 ""
+		StrCpy $4 0
+		StrCpy $3 ""
+		NoReset4:
+		StrCpy $3 "$3$6"
+		IntCmp $4 0 NoBuildR1 BuildR1
+		BuildR1:
+		StrCpy $R1 "$R1$6"
+		NoBuildR1:
+		;MessageBox MB_YESNO|MB_ICONQUESTION "$$3: [$3]$\r$\n$$0: [$0]$\r$\n$\r$\nContinue?" IDNO PARAMDONE
+		StrCmp $3 $0 0 FindParamValue
+		StrCpy $4 1
+ 
+	Goto FindParamValue
+ 
+	ParamDone:
+	;	This last part of the script will trim the spaces off either end of $R1:
+	StrCpy $2 "X$R1"
+	strCpy $R1 ""
+	StrCpy $1 0
+	KeepTrimming:
+		IntOp $1 $1 + 1
+		strCpy $6 $2 1 $1
+		StrCmp $6 "" DoneTrimming 0
+		strCmp $6 " " NoCopyCharR1 CopyCharR1
+		copyCharR1:
+		StrCpy $R1 "$R1$6"
+		Goto KeepTrimming
+		NoCopyCharR1:
+		Goto KeepTrimming
+	DoneTrimming:
+ 
+	Pop $7
+	Pop $6
+	Pop $5
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+	Push $R1
+	!undef PARAM_CHAR
 FunctionEnd
