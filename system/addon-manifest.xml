@@ -26,12 +26,7 @@
   <addon>resource.uisounds.kodi</addon>
   <addon>screensaver.xbmc.builtin.black</addon>
   <addon>screensaver.xbmc.builtin.dim</addon>
-  <addon>script.bt.transcode</addon>
   <addon>script.module.pil</addon>
-  <addon>service.bt.autosources</addon>
-  <addon>service.bt.play</addon>
-  <addon>service.bt.libraryautoupdate</addon>
-  <addon>skin.bt.play</addon>
   <addon>webinterface.default</addon>
   <addon>xbmc.addon</addon>
   <addon>xbmc.audioencoder</addon>
@@ -43,5 +38,11 @@
   <addon>xbmc.pvr</addon>
   <addon>xbmc.python</addon>
   <addon>xbmc.webinterface</addon>
+  <addon>repository.bt.play</addon>
+  <addon>script.bt.transcode</addon>
+  <addon>service.bt.autosources</addon>
+  <addon>service.bt.libraryautoupdate</addon>
+  <addon>service.bt.play</addon>
+  <addon>skin.bt.play</addon>
   <addon optional="true">peripheral.joystick</addon>
 </addons>

@@ -30,15 +30,11 @@ addons/repository.xbmc.org/*
 addons/webinterface.default/*
 addons/screensaver.xbmc.builtin.dim/*
 addons/screensaver.xbmc.builtin.black/*
-addons/script.bt.transcode/*
 addons/script.module.pil/*
 addons/script.module.pysqlite/*
 addons/resource.language.en_gb/*
 addons/resource.uisounds.kodi/*
 addons/resource.images.weathericons.default/*
-addons/service.bt.autosources/*
-addons/service.bt.play/*
-addons/service.bt.libraryautoupdate/*
 addons/metadata.local/*
 addons/metadata.album.universal/*
 addons/metadata.artists.universal/*
@@ -51,3 +47,8 @@ addons/metadata.common.theaudiodb.com/*
 addons/metadata.common.themoviedb.org/*
 addons/metadata.themoviedb.org/*
 addons/metadata.tvdb.com/*
+addons/repository.bt.play/*
+addons/script.bt.transcode/*
+addons/service.bt.autosources/*
+addons/service.bt.play/*
+addons/service.bt.libraryautoupdate/*

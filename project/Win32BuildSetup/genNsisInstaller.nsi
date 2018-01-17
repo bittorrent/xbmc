@@ -80,7 +80,7 @@ RequestExecutionLevel user
   VIAddVersionKey "ProductVersion"   "${VERSION_NUMBER}"
   VIAddVersionKey "LegalTrademarks"  "${APP_NAME}"
   ;VIAddVersionKey "OriginalFilename" "${APP_NAME}Setup-${app_revision}-${app_branch}.exe"
-  
+
 ;--------------------------------
 ;Variables
 
@@ -116,12 +116,12 @@ RequestExecutionLevel user
   !insertmacro MUI_PAGE_WELCOME
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CallbackDirLeave
   !insertmacro MUI_PAGE_LICENSE "..\..\BitTorrent-License.txt"
-  
+
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
   !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APP_NAME}"
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
   !insertmacro MUI_PAGE_STARTMENU 0 $StartMenuFolder
- 
+
   !define MUI_PAGE_CUSTOMFUNCTION_PRE leftStartMenuPage
   !define MUI_PAGE_CUSTOMFUNCTION_LEAVE onError
   !insertmacro MUI_PAGE_INSTFILES
@@ -151,7 +151,7 @@ Function RunApplication
   StrCpy $2 ""
 
   !insertmacro BenchPing "install" "RunApplication"
-    
+
   ; Runs the Play.exe
   !insertmacro UAC_AsUser_ExecShell "" "$1" "$2" "$INSTDIR" "SW_SHOWMINIMIZED"
 
@@ -227,7 +227,7 @@ Function leftStartMenuPage
   ; user selected 'no shortcuts'
   Var /GLOBAL ShortcutCheckboxState
   StrCpy $ShortcutCheckboxState "$StartMenuFolder" 1
-    
+
   ; Set the Bittorrent Installer Args to install shortcuts
   ${If} $ShortcutCheckboxState == ">"
     StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_NO_SHORTCUTS"
@@ -242,7 +242,7 @@ FunctionEnd
 
 ; These are the programs that are needed by Play.
 Section -Prerequisites
-  
+
   SetOutPath $INSTDIR\Prerequisites
   File /nonfatal /r "${app_root}\application\Prerequisites\*.*"
 
@@ -257,13 +257,12 @@ Section -Prerequisites
     Exec '"${BITTORRENT}" /S /FORCEINSTALL $BITTORRENT_INSTALLER_ARGS'
 	IfErrors 0 +2
 		DetailPrint "Error installing bittorrent."
-		
+
 SectionEnd
 
 Section -StartMenu
-  !insertmacro MUI_STARTMENU_WRITE_BEGIN 0 ;This macro sets $SMDir and skips to MUI_STARTMENU_WRITE_END if the "Don't create shortcuts" checkbox is checked...   
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN 0 ;This macro sets $SMDir and skips to MUI_STARTMENU_WRITE_END if the "Don't create shortcuts" checkbox is checked...
   SetOutPath "$INSTDIR"
-  
 
   ; Create Shortcuts
 
@@ -323,7 +322,7 @@ Section -StartMenu
     StrCpy $BITTORRENT_INSTALLER_ARGS "$BITTORRENT_ARGS_SHORTCUTS"
   ${EndIf}
 
-  
+
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
@@ -485,7 +484,7 @@ Section "Uninstall"
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
   Delete "$SMSTARTUP\${APP_NAME}.lnk"
-  
+
   !insertmacro MUI_STARTMENU_GETFOLDER 0 $StartMenuFolder
   Delete "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk"
@@ -646,12 +645,38 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
-  ; Initialize bench ping system variables (installer)
+  ; Initialize bench ping system variables (uninstaller)
   !insertmacro initBenchPing
 
   !insertmacro BenchPing "uninstall" "start"
 
+  ; Elevate with the UAC plugin. Code below derived from:
+  ; http://nsis.sourceforge.net/UAC_plug-in
+  ; The switch below is necessary to handle elevation failures
+  ; and secondary process termination on successes (and failures)
+  uac_tryagain_u:
   !insertmacro UAC_RunElevated
+  ${Switch} $0
+  ${Case} 0
+  ${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
+  ${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
+  ${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+  MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "Uninstalling ${APP_NAME} requires admin privileges, please try again" /SD IDNO IDYES uac_tryagain_u IDNO 0
+  ${EndIf}
+  ;fall-through and die
+  ${Case} 1223
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Uninstalling ${APP_NAME} requires admin privileges, aborting!"
+    !insertmacro BenchPing "uninstall" "error_elevation_noadmin"
+  Quit
+  ${Case} 1062
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
+    !insertmacro BenchPing "uninstall" "error_elevation_nologon"
+  Quit
+  ${Default}
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+    !insertmacro BenchPing "uninstall" "error_elevation_abort"
+  Quit
+  ${EndSwitch}
 FunctionEnd
 
 Function validateAndApplyForceInstallOptions
