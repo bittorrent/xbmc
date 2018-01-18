@@ -15,7 +15,6 @@
 ;--------------------------------
 ;Include Modern UI
 
-!include "StrFunc.nsh"
 !include "MUI2.nsh"
 !include "nsDialogs.nsh"
 !include "LogicLib.nsh"
@@ -156,7 +155,26 @@ Function RunApplication
   !insertmacro UAC_AsUser_ExecShell "" "$1" "$2" "$INSTDIR" "SW_SHOWMINIMIZED"
 
   ; Runs the Bittorrent.exe via the Desktop shortcut which is always set via this installer's force installer args when bittorrent is installed.
-  !insertmacro UAC_AsUser_ExecShell "" "BitTorrent.lnk" "" "$DESKTOP" "SW_SHOWMINIMIZED"
+
+  IfFileExists "$APPDATA\BitTorrent\BitTorrent.exe" 0 LaunchBittorrentFromProgramFiles
+    !insertmacro UAC_AsUser_ExecShell "" "BitTorrent.exe" "" "$APPDATA\BitTorrent" "SW_SHOWMINIMIZED"
+    LogEx::Write "Launched BitTorrent from app data."
+    Goto Launched
+
+  LaunchBittorrentFromProgramFiles:
+    IfFileExists "$PROGRAMFILES\BitTorrent\BitTorrent.exe" 0 LaunchBittorrentFromProgramFiles64
+      !insertmacro UAC_AsUser_ExecShell "" "BitTorrent.exe" "" "$PROGRAMFILES\BitTorrent" "SW_SHOWMINIMIZED"
+    LogEx::Write "Launched BitTorrent from app program files (x86)."
+    Goto Launched
+
+  LaunchBittorrentFromProgramFiles64:
+    IfFileExists "$PROGRAMFILES64\BitTorrent\BitTorrent.exe" 0 Launched
+      !insertmacro UAC_AsUser_ExecShell "" "BitTorrent.exe" "" "$PROGRAMFILES64\BitTorrent" "SW_SHOWMINIMIZED"
+    LogEx::Write "Launched BitTorrent from app program files (64)."
+    Goto Launched
+
+  Launched:
+    LogEx::Write "Finished attempting launch of the Play and Bittorrent apps."
 FunctionEnd
 
 Function CallbackDirLeave
@@ -268,8 +286,13 @@ Section -StartMenu
 
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_ADD_START_MENU_LINK = 1
+      LogEx::Write "Adding start menu link under silent force install"
       CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
       CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+         "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+         "" "Start ${APP_NAME}."
+
+      CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
          "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
          "" "Start ${APP_NAME}."
     ${EndIf}
@@ -278,14 +301,19 @@ Section -StartMenu
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
        "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
        "" "Start ${APP_NAME}."
+   CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+       "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+       "" "Start ${APP_NAME}."
   ${EndIf}
 
 
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_CREATE_UNINSTALLER_SETTINGS = 1
-      CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
-         "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
-         "" "Uninstall ${APP_NAME}."
+      ${AndIf} $FORCEINSTALL_ADD_START_MENU_LINK = 1
+        LogEx::Write "Adding uninstaller link in start menu under silent force install"
+        CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
+           "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL \
+           "" "Uninstall ${APP_NAME}."
     ${EndIf}
   ${Else}
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" \
@@ -295,12 +323,13 @@ Section -StartMenu
 
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_ADD_QUICKLAUNCH_LINK = 1
-      CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+      LogEx::Write "Adding quick launch link under silent force install"
+      CreateShortCut "$QUICKLAUNCH\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
          "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
          "" "Start ${APP_NAME}."
     ${EndIf}
   ${Else}
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+    CreateShortCut "$QUICKLAUNCH\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
        "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
        "" "Start ${APP_NAME}."
   ${EndIf}
@@ -308,12 +337,24 @@ Section -StartMenu
   ; Desktop Shortcut
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_ADD_DESKTOP_LINK = 1
+      LogEx::Write "Adding desktop shortcut under silent force install"
       File "${ICON}"
       createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
     ${EndIf}
   ${Else}
     File "${ICON}"
     createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+  ${EndIf}
+
+
+  ; Start play at startup
+  ${If} $SILENT_AND_FORCEINSTALL = 1 
+    ${If} $FORCEINSTALL_RUN_ON_SYSTEM_STARTUP = 1
+      LogEx::Write "Adding play to system startup folder under force install"
+      CreateShortCut "$SMSSTARTUP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" \
+         "" "$INSTDIR\${APP_NAME}.exe" 0 SW_SHOWNORMAL \
+         "" "Start ${APP_NAME}."
+    ${EndIf}
   ${EndIf}
   
   ; Set the Bittorrent Installer Args to install shortcuts
@@ -352,6 +393,7 @@ Section "${APP_NAME}" SecAPP
   ;Create uninstaller
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_CREATE_UNINSTALLER_SETTINGS = 1
+      LogEx::Write "Adding uninstaller under silent force install"
       SetOutPath "$INSTDIR"
       WriteUninstaller "$INSTDIR\Uninstall.exe"
       ;add entry to add/remove programs
@@ -402,6 +444,7 @@ Section "${APP_NAME}" SecAPP
   ;create firewall exceptions for app and script.bt.transcode addon ffmpeg
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_ADD_FIREWALL_RULES = 1
+      LogEx::Write "Adding firewall rules under silent force install"
       nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
       nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
     ${EndIf}
@@ -514,6 +557,13 @@ FunctionEnd
 ;-------------------
 
 Function .onInstSuccess
+  ${If} $SILENT_AND_FORCEINSTALL = 1
+    Call RunApplication
+  ${EndIf}
+
+  LogEx::Write "Installer Succeeded"
+  LogEx::Close
+
   ;save the uuid
   FileOpen $4 "$INSTDIR\uuid.txt" w
   FileWrite $4 $INSTALL_GUID
@@ -521,7 +571,6 @@ Function .onInstSuccess
 
   RMDir /r "$INSTDIR\Prerequisites"
 
-  Call RunApplication
   !insertmacro BenchPing "install" "success"
 FunctionEnd
 
@@ -538,16 +587,25 @@ FunctionEnd
 !define CMDPAR "!insertmacro CMDPAR"
 
 Function .onInit
+  SetOutPath "$INSTDIR"
+  LogEx::Init true "$INSTDIR\install.log"
+  LogEx::Write "Installer entered onInit"
+
   ; Initialize bench ping system variables (installer)
   !insertmacro initBenchPing
 
   Var /GLOBAL FORCEINSTALL_BIN_STRING
   StrCpy $SILENT_AND_FORCEINSTALL 0
+
+  LogEx::Write "Bench initialized"
   
   ${If} ${Silent}
+    LogEx::Write "Installer is running in silent mode"
     ; First check if forceinstall was set, if not bail out. 
     ; Set forceinstall vars if they exist and if silent install
     ${CMDPAR} "/FORCEINSTALL" $FORCEINSTALL_BIN_STRING
+    
+    LogEx::Write "FORCEINSTALL ARG: $FORCEINSTALL_BIN_STRING"
 
     ${IfNot} $FORCEINSTALL_BIN_STRING == ""
 	Push $FORCEINSTALL_BIN_STRING
@@ -563,7 +621,7 @@ Function .onInit
     StrCpy $BITTORRENT_INSTALLER_ARGS $BITTORRENT_ARGS_NO_SHORTCUTS ; No start menu and no desktop shortcuts
   ${EndIf}
 
-  
+  LogEx::Write "About to elevate and start the install." 
 
   !insertmacro BenchPing "install" "start"
 
@@ -692,6 +750,8 @@ Function validateAndApplyForceInstallOptions
 
   StrCpy $BITTORRENT_INSTALLER_ARGS $forceInstallOptions
 
+  LogEx::Write "Validating and setting install options."
+
   ${If} $lenOfForceInstallOptions = 16
     StrCpy $SILENT_AND_FORCEINSTALL 1
     Var /GLOBAL optionChar
@@ -798,8 +858,8 @@ FunctionEnd
 -	Parameters CANNOT be "nested" (a parameter within a parameter)
 -	The function takes advantage of the StrCmp function, which is 
 	NOT case-sensative.  (In other works "/l" and "/L" will be the same)
--	This function assumes that $CMDLINE will always have quotes around the actual
-	SETUP.EXE file (example: "C:\my path\setup.exe" /b=parameter)
+-	This function assumes that $CMDLINE will have a installer / setup file that ends in .exe at the beginning of the
+        cmdline.
 -	The return value will be trimmed automatically (no spaces at either end)	
 [VARIABLES]
 $0 (str):	string indicating the what the format of the command should be (example: "/B")
@@ -813,26 +873,82 @@ $5 (int):	Total Length of the $CMDLINE variable, including the parameter part
 $6 (int):	Single-character string of each character in the parameter field
 $R1 (str):	Value of the requested parameter value
 $7 (int):	Temporary variable for holding numbers
+$R2 (bool):     Test var for determining end of the .exe substring (.)
+$R3 (bool):     Test var for determining end of the .exe substring (e)
+$R4 (bool):     Test var for determining end of the .exe substring (x)
+$R5 (bool):     Test var for determining end of the .exe substring (e)
 */
  
 Function GetParameters
+        LogEx::Write "In GetParameters"
 	; all parameters must start with PARAM_CHAR.  (Change value as needed.)
 	!define PARAM_CHAR "/"	
 	Exch $0 ; $0 now contains the TAG string
 	Push $R1
-	Push $1
+        Push $1
 	Push $2
 	Push $3
 	Push $4
 	Push $5
 	Push $6
 	Push $7
+	Push $R2
+	Push $R3
+	Push $R4
+	Push $R5
+
+	StrCpy $R2 0
+	StrCpy $R3 0
+	StrCpy $R4 0
+	StrCpy $R5 0
+
 	StrCpy $1 0	; Initialize the pointer variable
 	StrLen $5 $CMDLINE
+	LogEx::Write "Finding start of params..."
 	FindParam:	; Start loop to find the parameter portion of the $CMDLINE
 		IntOp $1 $1 + 1
 		StrCpy $6 $CMDLINE 1 $1
-		StrCmp $6 '"' ExitFindParam 0	; Exit the loop when the last quotes are found
+
+		${If} $1 > $5
+		  LogEx::Write "Did not find the start of the parameters section, reached end of cmdline string."
+		  Goto ExitFindParam
+		${EndIf}
+
+		${If} $R2 = 0
+		  ${AndIf} $6 == "."
+		    StrCpy $R2 1 
+		    Goto FindParam
+		${Else}
+		  ${If} $R2 = 1
+		    ${AndIf} $R3 = 0
+		    ${AndIf} $6 == "e"
+		      StrCpy $R3 1
+		      Goto FindParam
+		  ${Else}
+		    ${If} $R2 = 1
+		      ${AndIf} $R3 = 1
+		      ${AndIf} $R4 = 0
+		      ${AndIf} $6 == "x"
+		        StrCpy $R4 1
+		        Goto FindParam
+		    ${Else}
+		      ${If} $R2 = 1
+		        ${AndIf} $R3 = 1
+		        ${AndIf} $R4 = 1
+		        ${AndIf} $R5 = 0
+		        ${AndIf} $6 == "e"
+			  LogEx::Write "Found .exe, exiting the find param section loop."
+		          Goto ExitFindParam
+		      ${EndIf}
+		    ${EndIf}
+		  ${EndIf}
+		${EndIf}
+		
+		StrCpy $R2 0
+		StrCpy $R3 0
+		StrCpy $R4 0
+		StrCpy $R5 0
+
 		Goto FindParam
 	ExitFindParam:
 	IntOp $1 $1 + 2	;  Increment pointer one space to move it one character past the quotes
@@ -882,7 +998,10 @@ Function GetParameters
 		NoCopyCharR1:
 		Goto KeepTrimming
 	DoneTrimming:
- 
+        Pop $R5 
+        Pop $R4
+        Pop $R3
+        Pop $R2
 	Pop $7
 	Pop $6
 	Pop $5
