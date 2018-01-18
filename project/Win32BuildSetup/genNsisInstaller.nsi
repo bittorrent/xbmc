@@ -90,7 +90,6 @@ RequestExecutionLevel user
 
   !define BENCH_URL "http://i-5500.b-${BUILD_NUMBER}.${APP_NAME}.bench.utorrent.com/e?i=5500"
 
-  !define START_EXE "${APP_NAME}.exe"
   !define ICON "..\..\tools\windows\packaging\media\application.ico"
 
 ;--------------------------------
@@ -146,7 +145,7 @@ Function RunApplication
   ; Run app with the calculated flags
   ; DEV Note: Add extra startup flags here by
   ; concatenating onto $2
-  StrCpy $1 "${START_EXE}"
+  StrCpy $1 "${APP_NAME}.exe"
   StrCpy $2 ""
 
   !insertmacro BenchPing "install" "RunApplication"
@@ -339,11 +338,11 @@ Section -StartMenu
     ${If} $FORCEINSTALL_ADD_DESKTOP_LINK = 1
       LogEx::Write "Adding desktop shortcut under silent force install"
       File "${ICON}"
-      createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+      createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" "" "$INSTDIR\application.ico"
     ${EndIf}
   ${Else}
     File "${ICON}"
-    createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${START_EXE}" "" "$INSTDIR\application.ico"
+    createShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe" "" "$INSTDIR\application.ico"
   ${EndIf}
 
 
@@ -408,7 +407,7 @@ Section "${APP_NAME}" SecAPP
       WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                      "InstallLocation" "$INSTDIR"
       WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                     "DisplayIcon" "$INSTDIR\${START_EXE},0"
+                     "DisplayIcon" "$INSTDIR\${APP_NAME}.exe,0"
       WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                      "Publisher" "${COMPANY_NAME}"
       WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
@@ -431,7 +430,7 @@ Section "${APP_NAME}" SecAPP
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "InstallLocation" "$INSTDIR"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "DisplayIcon" "$INSTDIR\${START_EXE},0"
+                   "DisplayIcon" "$INSTDIR\${APP_NAME}.exe,0"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "Publisher" "${COMPANY_NAME}"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
@@ -445,14 +444,17 @@ Section "${APP_NAME}" SecAPP
   ${If} $SILENT_AND_FORCEINSTALL = 1 
     ${If} $FORCEINSTALL_ADD_FIREWALL_RULES = 1
       LogEx::Write "Adding firewall rules under silent force install"
-      nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
+      nsisFirewall::AddAuthorizedApplication "$INSTDIR\${APP_NAME}.exe" "${APP_NAME}"
+      Pop $0
       nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
+      Pop $0
     ${EndIf}
   ${Else}
-    nsisFirewall::AddAuthorizedApplication "$INSTDIR\${START_EXE}" "${APP_NAME}"
+    nsisFirewall::AddAuthorizedApplication "$INSTDIR\${APP_NAME}.exe" "${APP_NAME}"
+    Pop $0
     nsisFirewall::AddAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe" "ffmpeg.exe"
+    Pop $0
   ${EndIf}
-  Pop $0
 
   ;vs redist installer Section
   SetOutPath "$TEMP\vc2015"
@@ -537,7 +539,7 @@ Section "Uninstall"
   DeleteRegKey /ifempty HKCU "Software\${APP_NAME}"
 
   ;remove firewall exceptions for app and script.bt.transcode addon ffmpeg
-  nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${START_EXE}"
+  nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\${APP_NAME}.exe"
   nsisFirewall::RemoveAuthorizedApplication "$INSTDIR\addons\script.bt.transcode\exec\ffmpeg.exe"
   Pop $0
 
