@@ -25,6 +25,9 @@ pipeline {
 
   parameters {
     string(name: 'build_setup_args', defaultValue: "noclean nomingwlibs", description: "Build args, defaults to 'noclean nomingwlings' for fast builds, leave empty for a full build.")
+    booleanParam(name: 'skip_deps_and_mingw', defaultValue: false, description: "Skips downloading the xbmc deps and building of the mingq build env, only use this if you know what you are doing.")
+    booleanParam(name: 'override_release_build_check', defaultValue: false, description: "Overrides the release branch check when building so that 'build_setup_args' is respected.")
+    booleanParam(name: 'override_git_clean', defaultValue: false, description: "Override default git clean operation.")
   }
 
   environment {
@@ -48,7 +51,10 @@ pipeline {
           release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
           if (release) {
             bat "git config core.longpaths true"
-            bat "git clean -xdf"
+
+            if (params.override_git_clean == false) {
+                bat "git clean -xdf"
+            }
           }
         }
       }
@@ -69,13 +75,21 @@ pipeline {
 
     stage('Download XBMC DEPS') {
       steps {
-        bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
+        script {
+            if (params.skip_deps_and_mingw == false) {
+                bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_BUILD_DEPS_SCRIPT}"
+            }
+        }
       }
     }
 
     stage('Download Mingw Build Env') {
       steps {
-        bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
+        script {
+            if (params.skip_deps_and_mingw == false) {
+                bat "cd ${WIN_BUILD_DEPS_PATH} && ${WIN_DOWNLOAD_MINGW_ENV_SCRIPT}"
+            }
+        }
       }
     }
 
@@ -83,7 +97,7 @@ pipeline {
       steps {
         script {
           release = env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('support/')
-          if (release) {
+          if (release && params.override_release_build_check == false) {
             bat "cd ${WIN_BUILD_PATH} && ${WIN_BUILD_SCRIPT}"
           }
           else {
